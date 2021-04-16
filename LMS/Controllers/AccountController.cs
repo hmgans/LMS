@@ -14,6 +14,7 @@ using Microsoft.Extensions.Options;
 using LMS.Models;
 using LMS.Models.AccountViewModels;
 using LMS.Services;
+using MySql.Data.MySqlClient;
 
 namespace LMS.Controllers
 {
@@ -484,17 +485,48 @@ namespace LMS.Controllers
     /// <returns>A unique uID that is not be used by anyone else</returns>
     public string CreateNewUser(string fName, string lName, DateTime DOB, string SubjectAbbrev, string role)
     {
-      return "";
+            string connection = GetConnectionString();
+            using (MySqlConnection conn = new MySqlConnection(connection))
+            {
+
+
+                try
+                {
+                    // Open a connection
+                    conn.Open();
+
+                    MySqlCommand command = conn.CreateCommand();
+
+                    //ADD EVENT
+                    command.CommandText = "insert ignore into Events(Name, Site, Date) " +
+                       "values (@name, @site, @date);";
+
+                    command.Parameters.AddWithValue("@name", game.getEvent());
+                    command.Parameters.AddWithValue("@site", game.getSite());
+                    command.Parameters.AddWithValue("@date", game.getDate());
+
+                    command.ExecuteNonQuery();
+                    return "";
+                }
+                catch
+                {
+
+                }
+            }
+            return "";
     }
 
     /*******End code to modify********/
 
+    private string GetConnectionString()
+                {
+                    return "server=atr.eng.utah.edu;database=Team89LMS;uid=u1078722;password=hg1758";
+                }
 
-    
 
-    #region Helpers
+                #region Helpers
 
-    private void AddErrors(IdentityResult result)
+                private void AddErrors(IdentityResult result)
     {
       foreach (var error in result.Errors)
       {
