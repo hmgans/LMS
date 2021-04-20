@@ -30,7 +30,7 @@ namespace LMS.Models.LMSModels
         {
             if (!optionsBuilder.IsConfigured)
             {
-#warning To protect potentially sensitive information in your connection string, you should move it out of source code. See http://go.microsoft.com/fwlink/?LinkId=723263 for guidance on storing connection strings.
+// warning To protect potentially sensitive information in your connection string, you should move it out of source code. See http://go.microsoft.com/fwlink/?LinkId=723263 for guidance on storing connection strings.
                 optionsBuilder.UseMySql("Server=atr.eng.utah.edu;User Id=u1078722;Password=hg1758;Database=Team89LMS");
             }
         }
@@ -75,11 +75,11 @@ namespace LMS.Models.LMSModels
 
                 entity.Property(e => e.AcId)
                     .HasColumnName("acID")
-                    .HasColumnType("smallint(6)");
+                    .HasColumnType("int(10)");
 
                 entity.Property(e => e.ClassId)
                     .HasColumnName("classID")
-                    .HasColumnType("smallint(6)");
+                    .HasColumnType("int(10)");
 
                 entity.Property(e => e.Name)
                     .IsRequired()
@@ -106,11 +106,11 @@ namespace LMS.Models.LMSModels
 
                 entity.Property(e => e.AssId)
                     .HasColumnName("assID")
-                    .HasColumnType("smallint(6)");
+                    .HasColumnType("int(10)");
 
                 entity.Property(e => e.AcId)
                     .HasColumnName("acID")
-                    .HasColumnType("smallint(6)");
+                    .HasColumnType("int(10)");
 
                 entity.Property(e => e.Contents).HasColumnType("varchar(8192)");
 
@@ -141,11 +141,11 @@ namespace LMS.Models.LMSModels
 
                 entity.Property(e => e.ClassId)
                     .HasColumnName("classID")
-                    .HasColumnType("smallint(6)");
+                    .HasColumnType("int(10)");
 
                 entity.Property(e => e.CId)
                     .HasColumnName("cID")
-                    .HasColumnType("smallint(6)");
+                    .HasColumnType("int(10)");
 
                 entity.Property(e => e.End).HasColumnType("datetime");
 
@@ -189,17 +189,17 @@ namespace LMS.Models.LMSModels
 
                 entity.Property(e => e.CId)
                     .HasColumnName("cID")
-                    .HasColumnType("smallint(6)");
+                    .HasColumnType("int(10)");
 
                 entity.Property(e => e.DId)
                     .HasColumnName("dID")
-                    .HasColumnType("tinyint(4)");
+                    .HasColumnType("int(10)");
 
                 entity.Property(e => e.Name)
                     .IsRequired()
                     .HasColumnType("varchar(100)");
 
-                entity.Property(e => e.Number).HasColumnType("smallint(6)");
+                entity.Property(e => e.Number).HasColumnType("int(10)");
 
                 entity.HasOne(d => d.D)
                     .WithMany(p => p.Courses)
@@ -219,7 +219,7 @@ namespace LMS.Models.LMSModels
 
                 entity.Property(e => e.DId)
                     .HasColumnName("dID")
-                    .HasColumnType("tinyint(4)");
+                    .HasColumnType("int(10)");
 
                 entity.Property(e => e.Name)
                     .IsRequired()
@@ -244,11 +244,9 @@ namespace LMS.Models.LMSModels
 
                 entity.Property(e => e.ClassId)
                     .HasColumnName("classID")
-                    .HasColumnType("smallint(6)");
+                    .HasColumnType("int(10)");
 
-                entity.Property(e => e.Grade)
-                    .HasColumnType("varchar(2)")
-                    .HasDefaultValueSql("'--'");
+                entity.Property(e => e.Grade).HasColumnType("varchar(2)");
 
                 entity.HasOne(d => d.Class)
                     .WithMany(p => p.Enrolled)
@@ -277,7 +275,7 @@ namespace LMS.Models.LMSModels
 
                 entity.Property(e => e.DId)
                     .HasColumnName("dID")
-                    .HasColumnType("tinyint(4)");
+                    .HasColumnType("int(10)");
 
                 entity.Property(e => e.Dob)
                     .HasColumnName("DOB")
@@ -312,7 +310,7 @@ namespace LMS.Models.LMSModels
 
                 entity.Property(e => e.DId)
                     .HasColumnName("dID")
-                    .HasColumnType("tinyint(4)");
+                    .HasColumnType("int(10)");
 
                 entity.Property(e => e.Dob)
                     .HasColumnName("DOB")
@@ -347,7 +345,7 @@ namespace LMS.Models.LMSModels
 
                 entity.Property(e => e.AssId)
                     .HasColumnName("assID")
-                    .HasColumnType("smallint(6)");
+                    .HasColumnType("int(10)");
 
                 entity.Property(e => e.Contents).HasColumnType("varchar(8192)");
 

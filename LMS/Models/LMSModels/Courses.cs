@@ -10,9 +10,9 @@ namespace LMS.Models.LMSModels
             Classes = new HashSet<Classes>();
         }
 
-        public short CId { get; set; }
-        public short Number { get; set; }
-        public sbyte DId { get; set; }
+        public int CId { get; set; }
+        public int Number { get; set; }
+        public int DId { get; set; }
         public string Name { get; set; }
 
         public virtual Department D { get; set; }

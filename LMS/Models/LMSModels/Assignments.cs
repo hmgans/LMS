@@ -10,8 +10,8 @@ namespace LMS.Models.LMSModels
             Submissions = new HashSet<Submissions>();
         }
 
-        public short AssId { get; set; }
-        public short AcId { get; set; }
+        public int AssId { get; set; }
+        public int AcId { get; set; }
         public string Name { get; set; }
         public uint? Points { get; set; }
         public DateTime? DueDate { get; set; }

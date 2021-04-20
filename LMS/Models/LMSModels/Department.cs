@@ -12,7 +12,7 @@ namespace LMS.Models.LMSModels
             Student = new HashSet<Student>();
         }
 
-        public sbyte DId { get; set; }
+        public int DId { get; set; }
         public string Subject { get; set; }
         public string Name { get; set; }
 

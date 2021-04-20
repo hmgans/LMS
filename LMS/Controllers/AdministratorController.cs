@@ -110,11 +110,11 @@ namespace LMS.Controllers
                              where p.Subject.Equals(subject)
                              select p.DId).Distinct();
 
-                foreach(sbyte dID in query)
+                foreach(int dID in query)
                 {
                     Courses course = new Courses();
                     course.DId = dID;
-                    course.Number = (short)number;
+                    course.Number = number;
                     course.Name = name;
 
                     db.Courses.Add(course);
@@ -168,7 +168,7 @@ namespace LMS.Controllers
                     did = dID;
                 }
 
-                query = (IQueryable<sbyte>)(from p in db.Courses
+                query = (from p in db.Courses
                              where p.Number.Equals(number)
                              select p.CId).Distinct();
 

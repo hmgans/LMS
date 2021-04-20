@@ -11,8 +11,8 @@ namespace LMS.Models.LMSModels
             Enrolled = new HashSet<Enrolled>();
         }
 
-        public short ClassId { get; set; }
-        public short CId { get; set; }
+        public int ClassId { get; set; }
+        public int CId { get; set; }
         public string SemesterSeason { get; set; }
         public uint SemesterYear { get; set; }
         public string ProfId { get; set; }

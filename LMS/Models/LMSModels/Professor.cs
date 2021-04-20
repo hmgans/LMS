@@ -14,7 +14,7 @@ namespace LMS.Models.LMSModels
         public string FirstName { get; set; }
         public string LastName { get; set; }
         public DateTime? Dob { get; set; }
-        public sbyte DId { get; set; }
+        public int DId { get; set; }
 
         public virtual Department D { get; set; }
         public virtual ICollection<Classes> Classes { get; set; }
