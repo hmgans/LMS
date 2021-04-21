@@ -110,7 +110,7 @@ namespace LMS.Controllers
                              where p.Subject.Equals(subject)
                              select p.DId).Distinct();
 
-                foreach(int dID in query)
+                foreach (int dID in query)
                 {
                     Courses course = new Courses();
                     course.DId = dID;
@@ -119,13 +119,13 @@ namespace LMS.Controllers
 
                     db.Courses.Add(course);
                     int success = db.SaveChanges();
-                    if(success == 1)
+                    if (success == 1)
                     {
                         return Json(new { success = true });
                     }
                 }
-                
-                
+
+
 
             }
 
@@ -153,36 +153,46 @@ namespace LMS.Controllers
         /// a Class offering of the same Course in the same Semester.</returns>
         public IActionResult CreateClass(string subject, int number, string season, int year, DateTime start, DateTime end, string location, string instructor)
         {
-            int did;
-            int pid;
-            int cid;
-            
+            int cid = 0;
+            int did = 0;
+
             using (Team89LMSContext db = new Team89LMSContext())
             {
+
                 var query = (from p in db.Department
                              where p.Subject.Equals(subject)
                              select p.DId).Distinct();
-
-                foreach (sbyte dID in query)
+                // Retreive ID of department to get correct Course
+                foreach (int id in query)
                 {
-                    did = dID;
+                    did = id;
                 }
 
                 query = (from p in db.Courses
-                             where p.Number.Equals(number)
-                             select p.CId).Distinct();
+                         where p.Number.Equals(number) && p.DId.Equals(did)
+                         select p.CId).Distinct();
 
                 foreach (sbyte cID in query)
                 {
                     cid = cID;
                 }
 
+                Classes newClass = new Classes();
 
+                newClass.CId = cid;
+                newClass.SemesterSeason = season;
+                newClass.SemesterYear = (uint)year;
+                newClass.ProfId = instructor;
+                newClass.Location = location;
+                newClass.Start = start;
+                newClass.End = end;
 
-
-
-
-
+                db.Classes.Add(newClass);
+                int success = db.SaveChanges();
+                if (success == 1)
+                {
+                    return Json(new { success = true });
+                }
 
             }
 
@@ -190,7 +200,6 @@ namespace LMS.Controllers
 
             return Json(new { success = false });
 
-            return Json(new { success = false });
         }
 
 
