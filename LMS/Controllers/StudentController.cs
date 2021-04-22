@@ -68,8 +68,6 @@ namespace LMS.Controllers
     /// <returns>The JSON array</returns>
     public IActionResult GetMyClasses(string uid)
     {
-            using (Team89LMSContext db = new Team89LMSContext())
-            {
                 //Does this work?
                 var query = from p in db.Student
                             where p.UId.Equals(uid)
@@ -89,10 +87,6 @@ namespace LMS.Controllers
 
 
                 return Json(query.ToArray());
-
-            }
-
-            return Json(null);
     }
 
     /// <summary>
