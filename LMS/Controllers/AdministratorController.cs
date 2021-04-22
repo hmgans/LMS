@@ -44,8 +44,6 @@ namespace LMS.Controllers
         {
             // generate a new UID
 
-            using (Team89LMSContext db = new Team89LMSContext())
-            {
                 var query = from p in db.Courses
                             join g in db.Department on p.DId equals g.DId
                             where g.Subject.Equals(subject)
@@ -55,7 +53,7 @@ namespace LMS.Controllers
                                 name = p.Name
                             };
                 return Json(query.ToArray());
-            }
+            
         }
 
 
@@ -73,8 +71,6 @@ namespace LMS.Controllers
         /// <returns>The JSON result</returns>
         public IActionResult GetProfessors(string subject)
         {
-            using (Team89LMSContext db = new Team89LMSContext())
-            {
                 var query = from p in db.Professor
                             join g in db.Department on p.DId equals g.DId
                             where g.Subject.Equals(subject)
@@ -87,7 +83,7 @@ namespace LMS.Controllers
 
                             };
                 return Json(query.ToArray());
-            }
+            
 
         }
 
@@ -104,34 +100,18 @@ namespace LMS.Controllers
         /// false if the Course already exists.</returns>
         public IActionResult CreateCourse(string subject, int number, string name)
         {
-            using (Team89LMSContext db = new Team89LMSContext())
-            {
                 var query = (from p in db.Department
                              where p.Subject.Equals(subject)
                              select p.DId).Distinct();
 
-                foreach (int dID in query)
-                {
                     Courses course = new Courses();
-                    course.DId = dID;
+                    course.DId = query.ToArray()[0];
                     course.Number = number;
                     course.Name = name;
 
                     db.Courses.Add(course);
                     int success = db.SaveChanges();
-                    if (success == 1)
-                    {
-                        return Json(new { success = true });
-                    }
-                }
-
-
-
-            }
-
-
-
-            return Json(new { success = false });
+                    return Json(new { success = true });
         }
 
 
@@ -153,21 +133,16 @@ namespace LMS.Controllers
         /// a Class offering of the same Course in the same Semester.</returns>
         public IActionResult CreateClass(string subject, int number, string season, int year, DateTime start, DateTime end, string location, string instructor)
         {
-            int cid = 0;
-            int did = 0;
-
-            using (Team89LMSContext db = new Team89LMSContext())
-            {
+            
 
                 var query = from p in db.Department
                              where p.Subject.Equals(subject)
                              join x in db.Courses on p.DId equals x.DId
                              select x.CId;
 
-                foreach (sbyte cID in query)
-                {
+                    
                     Classes newClass = new Classes();
-                    newClass.CId = cID;
+                    newClass.CId = query.ToArray()[0];
                     newClass.SemesterSeason = season;
                     newClass.SemesterYear = (uint)year;
                     newClass.ProfId = instructor;
@@ -177,21 +152,9 @@ namespace LMS.Controllers
 
                     db.Classes.Add(newClass);
                     int success = db.SaveChanges();
-                    if (success == 1)
-                    {
-                        return Json(new { success = true });
-                    }
-                }
 
-                
-
-                
-
-            }
-
-
-
-            return Json(new { success = false });
+                    return Json(new { success = true });
+      
 
         }
 
