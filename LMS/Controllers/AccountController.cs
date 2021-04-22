@@ -614,6 +614,7 @@ namespace LMS.Controllers
         int maxID = Math.Max(student, Math.Max(admin, prof));
         string newUID = "u" + String.Format("{0,22:D7}", maxID + 1);
 
+        // remove whitespace from the string and return it
         return String.Concat(newUID.Where(c => !Char.IsWhiteSpace(c)));
     }
 
