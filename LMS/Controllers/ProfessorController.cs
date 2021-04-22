@@ -190,8 +190,7 @@ namespace LMS.Controllers
         /// <returns>The JSON array</returns>
         public IActionResult GetAssignmentCategories(string subject, int num, string season, int year)
         {
-            using (Team89LMSContext db = new Team89LMSContext())
-            {
+            
 
                 var query = from p in db.Department
                             where p.Subject.Equals(subject)
@@ -208,7 +207,7 @@ namespace LMS.Controllers
 
                 return Json(query.ToArray());
 
-            }
+            
         }
 
         /// <summary>
@@ -224,8 +223,7 @@ namespace LMS.Controllers
         ///	false if an assignment category with the same name already exists in the same class.</returns>
         public IActionResult CreateAssignmentCategory(string subject, int num, string season, int year, string category, int catweight)
         {
-            using (Team89LMSContext db = new Team89LMSContext())
-            {
+
 
                 var query = from p in db.Department
                             where p.Subject.Equals(subject)
@@ -236,26 +234,15 @@ namespace LMS.Controllers
                             join s in db.AssignmentCategory on h.ClassId equals s.ClassId
                             select s.ClassId;
 
-                foreach( int id in query)
-                {
                     AssignmentCategory assignCat = new AssignmentCategory();
-                    assignCat.ClassId = id;
+                    assignCat.ClassId = query.ToArray()[0];
                     assignCat.Name = category;
                     assignCat.Weight = (uint?)catweight;
 
                     db.AssignmentCategory.Add(assignCat);
                     int success = db.SaveChanges();
-                    if (success == 1)
-                    {
-                        return Json(new { success = true });
-                    }
-
-                }
-
-
-                return Json(new { success = false });
-
-            }
+                    return Json(new { success = true });
+    
 
         }
 
@@ -275,8 +262,6 @@ namespace LMS.Controllers
         /// false if an assignment with the same name already exists in the same assignment category.</returns>
         public IActionResult CreateAssignment(string subject, int num, string season, int year, string category, string asgname, int asgpoints, DateTime asgdue, string asgcontents)
         {
-            using (Team89LMSContext db = new Team89LMSContext())
-            {
 
                 var query = from p in db.Department
                             where p.Subject.Equals(subject)
@@ -288,26 +273,16 @@ namespace LMS.Controllers
                             where s.Name.Equals(category)
                             select s.AcId;
 
-                foreach (int ACID in query)
-                {
                     Assignments newAssign = new Assignments();
-                    newAssign.AcId = ACID;
+                    newAssign.AcId = query.ToArray()[0];
                     newAssign.Name = asgname;
                     newAssign.DueDate = asgdue;
                     newAssign.Contents = asgcontents;
                     newAssign.Points = (uint?)asgpoints;
                     db.Assignments.Add(newAssign);
-                    int success = db.SaveChanges();
-                    if (success == 1)
-                    {
-                        return Json(new { success = true });
-                    }
-                }
-            }
-               
+                    db.SaveChanges();
 
-
-                return Json(new { success = false });
+                    return Json(new { success = true });
         }
 
 
@@ -331,8 +306,6 @@ namespace LMS.Controllers
         public IActionResult GetSubmissionsToAssignment(string subject, int num, string season, int year, string category, string asgname)
         {
 
-            using (Team89LMSContext db = new Team89LMSContext())
-            {
 
                 var query = from p in db.Department
                             where p.Subject.Equals(subject)
@@ -356,7 +329,7 @@ namespace LMS.Controllers
                             };
 
                 return Json(query.ToArray());
-            }
+            
         }
 
 
@@ -374,9 +347,6 @@ namespace LMS.Controllers
         /// <returns>A JSON object containing success = true/false</returns>
         public IActionResult GradeSubmission(string subject, int num, string season, int year, string category, string asgname, string uid, int score)
         {
-            using (Team89LMSContext db = new Team89LMSContext())
-            {
-
                 var query = from p in db.Department
                             where p.Subject.Equals(subject)
                             join g in db.Courses on p.DId equals g.DId
@@ -391,19 +361,12 @@ namespace LMS.Controllers
                             select x;
                 // At this point we have the Submissions for a specific student 
 
-                foreach(Submissions sub in query)
-                {
-                    sub.Score = (uint?)score;
-                    int success = db.SaveChanges();
-                    if(success == 1)
-                    {
-                        return Json(new { success = true });
-                    }
-                }
+                query.ToArray()[0].Score = (uint?)score;
+                int success = db.SaveChanges();
 
-                return Json(new { success = false });
+                return Json(new { success = true });
 
-            }
+            
 
             
         }
@@ -422,9 +385,6 @@ namespace LMS.Controllers
         /// <returns>The JSON array</returns>
         public IActionResult GetMyClasses(string uid)
         {
-            using (Team89LMSContext db = new Team89LMSContext())
-            {
-                //Does this work?
                 var query = from p in db.Professor
                             where p.UId.Equals(uid)
                             join x in db.Classes on p.UId equals x.ProfId
@@ -442,7 +402,7 @@ namespace LMS.Controllers
 
                 return Json(query.ToArray());
 
-            }
+            
 
         }
 

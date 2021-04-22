@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using LMS.Models.LMSModels;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -14,14 +15,14 @@ namespace LMS.Controllers
 
     // TODO: Uncomment and change 'X' after you have scaffoled
 
-    /*
-    protected TeamXLMSContext db;
+    
+    protected Team89LMSContext db;
 
     public CommonController()
     {
-      db = new TeamXLMSContext();
+      db = new Team89LMSContext();
     }
-    */
+    
 
     /*
      * WARNING: This is the quick and easy way to make the controller

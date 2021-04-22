@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using LMS.Models.LMSModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -67,8 +68,31 @@ namespace LMS.Controllers
     /// <returns>The JSON array</returns>
     public IActionResult GetMyClasses(string uid)
     {
-   
-      return Json(null);
+            using (Team89LMSContext db = new Team89LMSContext())
+            {
+                //Does this work?
+                var query = from p in db.Student
+                            where p.UId.Equals(uid)
+                            join x in db.Enrolled on p.UId equals x.UId
+                            join y in db.Classes on x.ClassId equals y.ClassId
+                            join z in db.Courses on y.CId equals z.CId
+                            join k in db.Department on z.DId equals k.DId
+                            select new
+                            {
+                                subject = k.Subject,
+
+                                number = z.,
+                                name = w.Name,
+                                season = x.SemesterSeason,
+                                year = x.SemesterYear
+                            };
+
+
+                return Json(query.ToArray());
+
+            }
+
+            return Json(null);
     }
 
     /// <summary>
