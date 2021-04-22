@@ -159,40 +159,33 @@ namespace LMS.Controllers
             using (Team89LMSContext db = new Team89LMSContext())
             {
 
-                var query = (from p in db.Department
+                var query = from p in db.Department
                              where p.Subject.Equals(subject)
-                             select p.DId).Distinct();
-                // Retreive ID of department to get correct Course
-                foreach (int id in query)
-                {
-                    did = id;
-                }
-
-                query = (from p in db.Courses
-                         where p.Number.Equals(number) && p.DId.Equals(did)
-                         select p.CId).Distinct();
+                             join x in db.Courses on p.DId equals x.DId
+                             select x.CId;
 
                 foreach (sbyte cID in query)
                 {
-                    cid = cID;
+                    Classes newClass = new Classes();
+                    newClass.CId = cID;
+                    newClass.SemesterSeason = season;
+                    newClass.SemesterYear = (uint)year;
+                    newClass.ProfId = instructor;
+                    newClass.Location = location;
+                    newClass.Start = start;
+                    newClass.End = end;
+
+                    db.Classes.Add(newClass);
+                    int success = db.SaveChanges();
+                    if (success == 1)
+                    {
+                        return Json(new { success = true });
+                    }
                 }
 
-                Classes newClass = new Classes();
+                
 
-                newClass.CId = cid;
-                newClass.SemesterSeason = season;
-                newClass.SemesterYear = (uint)year;
-                newClass.ProfId = instructor;
-                newClass.Location = location;
-                newClass.Start = start;
-                newClass.End = end;
-
-                db.Classes.Add(newClass);
-                int success = db.SaveChanges();
-                if (success == 1)
-                {
-                    return Json(new { success = true });
-                }
+                
 
             }
 
