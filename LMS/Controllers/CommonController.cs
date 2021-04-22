@@ -13,16 +13,12 @@ namespace LMS.Controllers
 
     /*******Begin code to modify********/
 
-    // TODO: Uncomment and change 'X' after you have scaffoled
-
-    
     protected Team89LMSContext db;
 
     public CommonController()
     {
       db = new Team89LMSContext();
     }
-    
 
     /*
      * WARNING: This is the quick and easy way to make the controller
@@ -31,9 +27,7 @@ namespace LMS.Controllers
      *          (look this up if interested).
     */
 
-    // TODO: Uncomment and change 'X' after you have scaffoled
-    /*
-    public void UseLMSContext(TeamXLMSContext ctx)
+    public void UseLMSContext(Team89LMSContext ctx)
     {
       db = ctx;
     }
@@ -46,20 +40,26 @@ namespace LMS.Controllers
       }
       base.Dispose(disposing);
     }
-    */
-
+    
 
 
     /// <summary>
-    /// Retreive a JSON array of all departments from the database.
+    /// Retrieve a JSON array of all departments from the database.
     /// Each object in the array should have a field called "name" and "subject",
     /// where "name" is the department name and "subject" is the subject abbreviation.
     /// </summary>
     /// <returns>The JSON array</returns>
     public IActionResult GetDepartments()
     {
-      // TODO: Do not return this hard-coded array.
-      return Json(new[] { new { name = "None", subject = "NONE" } });
+        // is this really the entire query?
+        var query = from d in db.Department
+                    select new
+                    {
+                        name = d.Name,
+                        subject = d.Subject
+                    };
+
+      return Json(query.ToArray());
     }
 
 
@@ -76,7 +76,20 @@ namespace LMS.Controllers
     /// </summary>
     /// <returns>The JSON array</returns>
     public IActionResult GetCatalog()
-    {     
+    {
+            var query = from c in db.Courses
+                        join d in db.Department on c.DId equals d.DId
+                        select new
+                        {
+                            subject = d.Subject,
+                            dname = d.Name,
+                        };
+
+            //TODO: figure out how to get an array of JSON objects
+            foreach (var d in query)
+            {
+
+            }
 
       return Json(null);
     }
@@ -97,7 +110,6 @@ namespace LMS.Controllers
     /// <returns>The JSON array</returns>
     public IActionResult GetClassOfferings(string subject, int number)
     {
-      
       return Json(null);
     }
 
