@@ -110,59 +110,25 @@ namespace LMS.Controllers
 
             using (Team89LMSContext db = new Team89LMSContext())
             {
-                int did = 0;
-                int cid = 0;
-                int classID = 0;
-                
-                
-                var query = (from p in db.Department
-                             where p.Subject.Equals(subject)
-                             select p.DId).Distinct();
-                // Retreive ID of department to get correct Course
-                foreach (int id in query)
-                {
-                    did = id;
-                }
-
-                // Retreive Course ID
-                query = (from p in db.Courses
-                         where p.Number.Equals(num) && p.DId.Equals(did)
-                         select p.CId).Distinct();
-
-                foreach (sbyte cID in query)
-                {
-                    cid = cID;
-                }
-
-                // Use number and course ID, season, and year to get proper class id
-                query = (from p in db.Classes
-                         where p.CId.Equals(cid) && p.SemesterSeason.Equals(season) && p.SemesterYear.Equals(year)
-                         select p.ClassId);
-
-                foreach(int classiD in query)
-                {
-                    classID = classiD;
-                }
-                // At this point we can use class ID to retrive uID and Grades from each student
-
-                query = from p in db.Enrolled
-                        join g in db.Student on p.UId equals g.UId
-                        where p.ClassId.Equals(classID)
-                        select new
-                        {
-                            fname = g.FirstName,
-                            lname = g.LastName,
-                            uid = g.UId,
-                            dob = g.Dob,
-                            grade = p.Grade
-                        };
+                var query = from p in db.Department
+                            where p.Subject.Equals(subject)
+                            join g in db.Courses on p.DId equals g.DId
+                            where g.Number.Equals(num)
+                            join h in db.Classes on g.CId equals h.CId
+                            where h.SemesterSeason.Equals(season) && h.SemesterYear.Equals(year)
+                            join x in db.Enrolled on h.ClassId equals x.ClassId
+                            join w in db.Student on x.UId equals w.UId
+                            select new
+                            {
+                                fname = w.FirstName,
+                                lname = w.LastName,
+                                uid = w.UId,
+                                dob = w.Dob,
+                                grade = x.Grade
+                            };
+                return Json(query.ToArray());
 
             }
-
-
-            // Use class ID to get all students from the enrolled table
-
-            return Json(null);
         }
 
 
@@ -185,9 +151,30 @@ namespace LMS.Controllers
         /// <returns>The JSON array</returns>
         public IActionResult GetAssignmentsInCategory(string subject, int num, string season, int year, string category)
         {
+            using (Team89LMSContext db = new Team89LMSContext())
+            {
 
-            return Json(null);
+                var query = from p in db.Department
+                            where p.Subject.Equals(subject)
+                            join g in db.Courses on p.DId equals g.DId
+                            where g.Number.Equals(num)
+                            join h in db.Classes on g.CId equals h.CId
+                            where h.SemesterSeason.Equals(season) && h.SemesterYear.Equals(year)
+                            join s in db.AssignmentCategory on h.ClassId equals s.ClassId
+                            where s.Name.Equals(category)
+                            join w in db.Assignments on s.AcId equals w.AcId
+                            select new
+                            {
+                                aname = w.Name,
+                                cname = s.Name,
+                                due = w.DueDate,
+                                submissions = w.Submissions
+                            };
+                return Json(query.ToArray());
+
+            }
         }
+
 
 
         /// <summary>
@@ -200,12 +187,28 @@ namespace LMS.Controllers
         /// <param name="num">The course number</param>
         /// <param name="season">The season part of the semester for the class the assignment belongs to</param>
         /// <param name="year">The year part of the semester for the class the assignment belongs to</param>
-        /// <param name="category">The name of the assignment category in the class</param>
         /// <returns>The JSON array</returns>
         public IActionResult GetAssignmentCategories(string subject, int num, string season, int year)
         {
+            using (Team89LMSContext db = new Team89LMSContext())
+            {
 
-            return Json(null);
+                var query = from p in db.Department
+                            where p.Subject.Equals(subject)
+                            join g in db.Courses on p.DId equals g.DId
+                            where g.Number.Equals(num)
+                            join h in db.Classes on g.CId equals h.CId
+                            where h.SemesterSeason.Equals(season) && h.SemesterYear.Equals(year)
+                            join s in db.AssignmentCategory on h.ClassId equals s.ClassId
+                            select new
+                            {
+                                name = s.Name,
+                                weight = s.Weight
+                            };
+
+                return Json(query.ToArray());
+
+            }
         }
 
         /// <summary>
@@ -221,8 +224,39 @@ namespace LMS.Controllers
         ///	false if an assignment category with the same name already exists in the same class.</returns>
         public IActionResult CreateAssignmentCategory(string subject, int num, string season, int year, string category, int catweight)
         {
+            using (Team89LMSContext db = new Team89LMSContext())
+            {
 
-            return Json(new { success = false });
+                var query = from p in db.Department
+                            where p.Subject.Equals(subject)
+                            join g in db.Courses on p.DId equals g.DId
+                            where g.Number.Equals(num)
+                            join h in db.Classes on g.CId equals h.CId
+                            where h.SemesterSeason.Equals(season) && h.SemesterYear.Equals(year)
+                            join s in db.AssignmentCategory on h.ClassId equals s.ClassId
+                            select s.ClassId;
+
+                foreach( int id in query)
+                {
+                    AssignmentCategory assignCat = new AssignmentCategory();
+                    assignCat.ClassId = id;
+                    assignCat.Name = category;
+                    assignCat.Weight = (uint?)catweight;
+
+                    db.AssignmentCategory.Add(assignCat);
+                    int success = db.SaveChanges();
+                    if (success == 1)
+                    {
+                        return Json(new { success = true });
+                    }
+
+                }
+
+
+                return Json(new { success = false });
+
+            }
+
         }
 
         /// <summary>
@@ -241,8 +275,39 @@ namespace LMS.Controllers
         /// false if an assignment with the same name already exists in the same assignment category.</returns>
         public IActionResult CreateAssignment(string subject, int num, string season, int year, string category, string asgname, int asgpoints, DateTime asgdue, string asgcontents)
         {
+            using (Team89LMSContext db = new Team89LMSContext())
+            {
 
-            return Json(new { success = false });
+                var query = from p in db.Department
+                            where p.Subject.Equals(subject)
+                            join g in db.Courses on p.DId equals g.DId
+                            where g.Number.Equals(num)
+                            join h in db.Classes on g.CId equals h.CId
+                            where h.SemesterSeason.Equals(season) && h.SemesterYear.Equals(year)
+                            join s in db.AssignmentCategory on h.ClassId equals s.ClassId
+                            where s.Name.Equals(category)
+                            select s.AcId;
+
+                foreach (int ACID in query)
+                {
+                    Assignments newAssign = new Assignments();
+                    newAssign.AcId = ACID;
+                    newAssign.Name = asgname;
+                    newAssign.DueDate = asgdue;
+                    newAssign.Contents = asgcontents;
+                    newAssign.Points = (uint?)asgpoints;
+                    db.Assignments.Add(newAssign);
+                    int success = db.SaveChanges();
+                    if (success == 1)
+                    {
+                        return Json(new { success = true });
+                    }
+                }
+            }
+               
+
+
+                return Json(new { success = false });
         }
 
 
@@ -266,7 +331,32 @@ namespace LMS.Controllers
         public IActionResult GetSubmissionsToAssignment(string subject, int num, string season, int year, string category, string asgname)
         {
 
-            return Json(null);
+            using (Team89LMSContext db = new Team89LMSContext())
+            {
+
+                var query = from p in db.Department
+                            where p.Subject.Equals(subject)
+                            join g in db.Courses on p.DId equals g.DId
+                            where g.Number.Equals(num)
+                            join h in db.Classes on g.CId equals h.CId
+                            where h.SemesterSeason.Equals(season) && h.SemesterYear.Equals(year)
+                            join s in db.AssignmentCategory on h.ClassId equals s.ClassId
+                            where s.Name.Equals(category)
+                            join w in db.Assignments on s.AcId equals w.AcId
+                            where w.Name.Equals(asgname)
+                            join x in db.Submissions on w.AssId equals x.AssId
+                            join y in db.Student on x.UId equals y.UId
+                            select new
+                            {
+                                fname = y.FirstName,
+                                lname = y.LastName,
+                                uid = y.UId,
+                                time = x.Time,
+                                score = x.Score
+                            };
+
+                return Json(query.ToArray());
+            }
         }
 
 
@@ -284,8 +374,38 @@ namespace LMS.Controllers
         /// <returns>A JSON object containing success = true/false</returns>
         public IActionResult GradeSubmission(string subject, int num, string season, int year, string category, string asgname, string uid, int score)
         {
+            using (Team89LMSContext db = new Team89LMSContext())
+            {
 
-            return Json(new { success = true });
+                var query = from p in db.Department
+                            where p.Subject.Equals(subject)
+                            join g in db.Courses on p.DId equals g.DId
+                            where g.Number.Equals(num)
+                            join h in db.Classes on g.CId equals h.CId
+                            where h.SemesterSeason.Equals(season) && h.SemesterYear.Equals(year)
+                            join s in db.AssignmentCategory on h.ClassId equals s.ClassId
+                            where s.Name.Equals(category)
+                            join w in db.Assignments on s.AcId equals w.AcId
+                            where w.Name.Equals(asgname)
+                            join x in db.Submissions on w.AssId equals x.AssId where x.UId.Equals(uid)
+                            select x;
+                // At this point we have the Submissions for a specific student 
+
+                foreach(Submissions sub in query)
+                {
+                    sub.Score = (uint?)score;
+                    int success = db.SaveChanges();
+                    if(success == 1)
+                    {
+                        return Json(new { success = true });
+                    }
+                }
+
+                return Json(new { success = false });
+
+            }
+
+            
         }
 
 
@@ -302,8 +422,28 @@ namespace LMS.Controllers
         /// <returns>The JSON array</returns>
         public IActionResult GetMyClasses(string uid)
         {
+            using (Team89LMSContext db = new Team89LMSContext())
+            {
+                //Does this work?
+                var query = from p in db.Professor
+                            where p.UId.Equals(uid)
+                            join x in db.Classes on p.UId equals x.ProfId
+                            join w in db.Courses on x.CId equals w.CId
+                            join y in db.Department on w.DId equals y.DId
+                            select new
+                            {
+                                subject = y.Subject,
+                                number = w.Number,
+                                name = w.Name,
+                                season = x.SemesterSeason,
+                                year = x.SemesterYear
+                            };
+                           
 
-            return Json(null);
+                return Json(query.ToArray());
+
+            }
+
         }
 
 
