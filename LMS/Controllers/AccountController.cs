@@ -15,6 +15,7 @@ using LMS.Models;
 using LMS.Models.AccountViewModels;
 using LMS.Services;
 using MySql.Data.MySqlClient;
+using LMS.Models.LMSModels;
 
 namespace LMS.Controllers
 {
@@ -488,42 +489,49 @@ namespace LMS.Controllers
         // generate a new UID
         String uID = GenerateNewUID();
 
-        string connection = "server = atr.eng.utah.edu; database = Team89LMS; uid = u1078722; password = hg1758";
-        using (MySqlConnection conn = new MySqlConnection(connection))
-        {
-            try
+            using (Team89LMSContext db = new Team89LMSContext())
             {
-                // Open a connection
-                conn.Open();
-
-                MySqlCommand command = conn.CreateCommand();
+                // get dept ID for professor and student roles
+                var querydID = (from d in db.Department
+                                where d.Subject.Equals(SubjectAbbrev)
+                                select d.DId).Distinct();
 
                 switch (role)
                 {
                     case "Administrator":
-                        command.CommandText = "INSERT IGNORE INTO Administrator VALUES (@uID, @fName, @lName, @DOB);";
+                        Administrator admin = new Administrator();
+                        admin.UId = uID;
+                        admin.FirstName = fName;
+                        admin.LastName = lName;
+                        admin.Dob = DOB;
+
+                        db.Administrator.Add(admin);
+                        db.SaveChanges();
                         break;
                     case "Professor":
-                        command.CommandText = "INSERT IGNORE INTO Professor VALUES (@uID, @fName, @lName, @DOB, @dID);";
-                        command.Parameters.AddWithValue("@dID", GetDeptID(SubjectAbbrev));
+                        Professor prof = new Professor();
+                        prof.UId = uID;
+                        prof.FirstName = fName;
+                        prof.LastName = lName;
+                        prof.Dob = DOB;
+                        prof.DId = querydID.ToArray()[0];
+
+                        db.Professor.Add(prof);
+                        db.SaveChanges();
                         break;
                     case "Student":
-                        command.CommandText = "INSERT IGNORE INTO Student VALUES (@uID, @fName, @lName, @DOB, @dID);";
-                        command.Parameters.AddWithValue("@dID", GetDeptID(SubjectAbbrev));
+                        Student stu = new Student();
+                        stu.UId = uID;
+                        stu.FirstName = fName;
+                        stu.LastName = lName;
+                        stu.Dob = DOB;
+                        stu.DId = querydID.ToArray()[0];
+
+                        db.Student.Add(stu);
+                        db.SaveChanges();
                         break;
                 }
-
-                command.Parameters.AddWithValue("@uID", uID);
-                command.Parameters.AddWithValue("@fName", fName);
-                command.Parameters.AddWithValue("@lName", lName);
-                command.Parameters.AddWithValue("@DOB", DOB);
-                command.Prepare();
-                command.ExecuteNonQuery();
             }
-            catch (Exception e) {
-                Console.WriteLine(e.Message);
-            }
-        }
 
         return uID;
     }
@@ -558,102 +566,47 @@ namespace LMS.Controllers
     /// <returns>A new uID that's 1 larger than the current highest uID</returns>
     private string GenerateNewUID()
     {
-        string studentUID = "";
-        string adminUID = "";
-        string profUID = "";
+            string studentUID = "";
+            string adminUID = "";
+            string profUID = "";
 
-        string connection = "server = atr.eng.utah.edu; database = Team89LMS; uid = u1078722; password = hg1758";
-        using (MySqlConnection conn = new MySqlConnection(connection))
-        {
-            try
+            using (Team89LMSContext db = new Team89LMSContext())
             {
-                // Open a connection
-                conn.Open();
+                // get highest student uID
+                var querysID = from s in db.Student
+                                orderby s.UId descending
+                                select s.UId;
 
-                MySqlCommand getUID = conn.CreateCommand();
-                getUID.CommandText = "SELECT uID FROM @table ORDER BY uID DESC LIMIT 1;";
-                getUID.Parameters.AddWithValue("@table", "Student");
-                getUID.Prepare();
+                string highestStudent = (!querysID.Any()) ? "" : querysID.ToArray()[0];
 
-                // gets the highest student ID
-                using (MySqlDataReader reader = getUID.ExecuteReader())
-                {
-                    reader.Read();
-                    studentUID = (string) reader["uID"];
-                }
+                // get highest admin uID
+                var queryaID = from a in db.Administrator
+                               orderby a.UId descending
+                               select a.UId;
 
-                // gets the highest admin ID
-                getUID.Parameters["@table"].Value = "Administrator";
-                using (MySqlDataReader reader = getUID.ExecuteReader())
-                {
-                    reader.Read();
-                    adminUID = (string) reader["uID"];
-                }
+                string highestAdmin = (!queryaID.Any()) ? "" : queryaID.ToArray()[0];
 
-                // gets the highest professor ID
-                getUID.Parameters["@table"].Value = "Professor";
-                using (MySqlDataReader reader = getUID.ExecuteReader())
-                {
-                    reader.Read();
-                    profUID = (string) reader["uID"];
-                }
+                // get highest prof uID
+                var querypID = from p in db.Professor
+                               orderby p.UId descending
+                               select p.UId;
+                string highestProf = (!querypID.Any()) ? "" : querypID.ToArray()[0];
+
+                // convert IDs to ints
+                int student, admin, prof;
+                student = (studentUID == "") ? 0 : Int32.Parse(highestStudent.Substring(1));
+                admin = (adminUID == "") ? 0 : Int32.Parse(highestAdmin.Substring(1));
+                prof = (profUID == "") ? 0 : Int32.Parse(highestProf.Substring(1));
+
+                // find the max of the three IDs
+                int maxID = Math.Max(student, Math.Max(admin, prof));
+
+                // properly format the new uID
+                string newUID = "u" + String.Format("{0,22:D7}", maxID + 1);
+
+                // remove whitespace from the string and return it
+                return String.Concat(newUID.Where(c => !Char.IsWhiteSpace(c)));
             }
-            catch (Exception e)
-            {
-                Console.WriteLine(e.Message);
-            }
-        }
-
-        int student, admin, prof;
-        // convert IDs to ints
-        student = (studentUID == "") ? 0 : Int32.Parse(studentUID.Substring(1));
-        admin = (adminUID == "") ? 0 : Int32.Parse(adminUID.Substring(1));
-        prof = (profUID == "") ? 0 : Int32.Parse(profUID.Substring(1));
-
-        // finds the max of the three IDs
-        int maxID = Math.Max(student, Math.Max(admin, prof));
-        string newUID = "u" + String.Format("{0,22:D7}", maxID + 1);
-
-        // remove whitespace from the string and return it
-        return String.Concat(newUID.Where(c => !Char.IsWhiteSpace(c)));
-    }
-
-    /// <summary>
-    /// Finds the department ID corresponding with the given subject abbreviation
-    /// </summary>
-    /// <returns>The corresponding dID or 0 if something went wrong</returns>
-    private int GetDeptID(string subject)
-    {
-        int dID = 0;
-
-        string connection = "server = atr.eng.utah.edu; database = Team89LMS; uid = u1078722; password = hg1758";
-        using (MySqlConnection conn = new MySqlConnection(connection))
-        {
-            try
-            {
-                // Open a connection
-                conn.Open();
-
-                MySqlCommand getDeptID = conn.CreateCommand();
-                getDeptID.CommandText = "SELECT dID FROM @table WHERE Subject=@subject;";
-                getDeptID.Parameters.AddWithValue("@table", "Department");
-                getDeptID.Parameters.AddWithValue("@subject", subject);
-                getDeptID.Prepare();
-
-                // gets the dID
-                using (MySqlDataReader reader = getDeptID.ExecuteReader())
-                {
-                    reader.Read();
-                    dID = (int) reader["dID"];
-                }
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e.Message);
-            }
-        }
-
-        return dID;
     }
 
     #endregion

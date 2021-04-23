@@ -51,7 +51,6 @@ namespace LMS.Controllers
     /// <returns>The JSON array</returns>
     public IActionResult GetDepartments()
     {
-        // is this really the entire query?
         var query = from d in db.Department
                     select new
                     {
