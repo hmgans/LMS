@@ -83,15 +83,16 @@ namespace LMS.Controllers
                         {
                             subject = d.Subject,
                             dname = d.Name,
+                            courses = from w in db.Courses where w.DId.Equals(d.DId)
+                                      select new
+                                      {
+                                          number = w.Number,
+                                          cname = w.Name
+                                      }
                         };
 
             //TODO: figure out how to get an array of JSON objects
-            foreach (var d in query)
-            {
-
-            }
-
-            return Json(null);
+            return Json(query.ToArray());
     }
 
     /// <summary>
