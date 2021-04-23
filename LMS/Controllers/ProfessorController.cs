@@ -362,7 +362,7 @@ namespace LMS.Controllers
                 // At this point we have the Submissions for a specific student 
 
                 query.ToArray()[0].Score = (uint?)score;
-                int success = db.SaveChanges();
+                db.SaveChanges();
 
                 return Json(new { success = true });
 
