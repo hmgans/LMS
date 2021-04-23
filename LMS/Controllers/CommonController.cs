@@ -59,7 +59,7 @@ namespace LMS.Controllers
                         subject = d.Subject
                     };
 
-      return Json(query.ToArray());
+        return Json(query.ToArray());
     }
 
 
@@ -91,7 +91,7 @@ namespace LMS.Controllers
 
             }
 
-      return Json(null);
+            return Json(null);
     }
 
     /// <summary>
@@ -110,7 +110,24 @@ namespace LMS.Controllers
     /// <returns>The JSON array</returns>
     public IActionResult GetClassOfferings(string subject, int number)
     {
-      return Json(null);
+            var query = from d in db.Department
+                        where d.Subject.Equals(subject)
+                        join c in db.Courses on d.DId equals c.DId
+                        where c.Number.Equals(number)
+                        join cl in db.Classes on c.CId equals cl.CId
+                        join p in db.Professor on cl.ProfId equals p.UId
+                        select new
+                        {
+                            season = cl.SemesterSeason,
+                            year = cl.SemesterYear,
+                            location = cl.Location,
+                            start = cl.Start,
+                            end = cl.End,
+                            fname = p.FirstName,
+                            lname = p.LastName
+                        };
+
+            return Json(query.ToArray());
     }
 
     /// <summary>
@@ -127,8 +144,19 @@ namespace LMS.Controllers
     /// <returns>The assignment contents</returns>
     public IActionResult GetAssignmentContents(string subject, int num, string season, int year, string category, string asgname)
     {
+            var query = from d in db.Department
+                        where d.Subject.Equals(subject)
+                        join c in db.Courses on d.DId equals c.DId
+                        where c.Number.Equals(num)
+                        join cl in db.Classes on c.CId equals cl.CId
+                        where cl.SemesterSeason.Equals(season) && cl.SemesterYear.Equals(year)
+                        join ac in db.AssignmentCategory on cl.ClassId equals ac.ClassId
+                        where ac.Name.Equals(category)
+                        join a in db.Assignments on ac.AcId equals a.AcId
+                        where a.Name.Equals(asgname)
+                        select a.Contents;
 
-      return Content("");
+            return Content(query.ToString()); // is this the right way to return the query as a string?
     }
 
 
@@ -148,8 +176,24 @@ namespace LMS.Controllers
     /// <returns>The submission text</returns>
     public IActionResult GetSubmissionText(string subject, int num, string season, int year, string category, string asgname, string uid)
     {
-      
-      return Content("");
+            var query = from d in db.Department
+                        where d.Subject.Equals(subject)
+                        join c in db.Courses on d.DId equals c.DId
+                        where c.Number.Equals(num)
+                        join cl in db.Classes on c.CId equals cl.CId
+                        where cl.SemesterSeason.Equals(season) && cl.SemesterYear.Equals(year)
+                        join ac in db.AssignmentCategory on cl.ClassId equals ac.ClassId
+                        where ac.Name.Equals(category)
+                        join a in db.Assignments on ac.AcId equals a.AcId
+                        where a.Name.Equals(asgname)
+                        join s in db.Submissions on a.AssId equals s.AssId into result
+                        from r in result.DefaultIfEmpty() where r.UId.Equals(uid)
+                        select new
+                        {
+                           contents = r == null ? "" : r.Contents
+                        };
+
+            return Content(query.ToString());
     }
 
 
@@ -171,8 +215,55 @@ namespace LMS.Controllers
     /// </returns>
     public IActionResult GetUser(string uid)
     {
-     
-      return Json(new { success = false } );
+            var query1 = from s in db.Student
+                         where s.UId.Equals(uid)
+                         join d in db.Department on s.DId equals d.DId
+                         select new
+                         {
+                             fname = s.FirstName,
+                             lname = s.LastName,
+                             uid = s.UId,
+                             department = d.DId
+                         };
+
+            if (query1.Any()) // if query1 is successful
+            {
+                return Json(query1.ToArray());
+            }
+
+            var query2 = from p in db.Professor
+                         where p.UId.Equals(uid)
+                         join d in db.Department on p.DId equals d.DId
+                         select new
+                         {
+                             fname = p.FirstName,
+                             lname = p.LastName,
+                             uid = p.UId,
+                             department = d.DId
+                         };
+
+            if (query2.Any()) // if query2 is successful
+            {
+                return Json(query2.ToArray());
+            }
+
+            var query3 = from a in db.Administrator
+                         where a.UId.Equals(uid)
+                         select new
+                         {
+                             fname = a.FirstName,
+                             lname = a.LastName,
+                             uid = a.UId,
+                         };
+
+            if (query3.Any()) // if query3 is successful
+            {
+                return Json(query3.ToArray());
+            }
+
+
+            // user doesn't exist
+            return Json(new { success = false } );
     }
 
 
