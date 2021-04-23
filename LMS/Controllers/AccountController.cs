@@ -566,10 +566,6 @@ namespace LMS.Controllers
     /// <returns>A new uID that's 1 larger than the current highest uID</returns>
     private string GenerateNewUID()
     {
-            string studentUID = "";
-            string adminUID = "";
-            string profUID = "";
-
             using (Team89LMSContext db = new Team89LMSContext())
             {
                 // get highest student uID
@@ -594,14 +590,14 @@ namespace LMS.Controllers
 
                 // convert IDs to ints
                 int student, admin, prof;
-                student = (studentUID == "") ? 0 : Int32.Parse(highestStudent.Substring(1));
-                admin = (adminUID == "") ? 0 : Int32.Parse(highestAdmin.Substring(1));
-                prof = (profUID == "") ? 0 : Int32.Parse(highestProf.Substring(1));
+                student = (highestStudent == "") ? 0 : Int32.Parse(highestStudent.Substring(1));
+                admin = (highestAdmin == "") ? 0 : Int32.Parse(highestAdmin.Substring(1));
+                prof = (highestProf == "") ? 0 : Int32.Parse(highestProf.Substring(1));
 
                 // find the max of the three IDs
                 int maxID = Math.Max(student, Math.Max(admin, prof));
 
-                // properly format the new uID
+                // increment and format the new uID
                 string newUID = "u" + String.Format("{0,22:D7}", maxID + 1);
 
                 // remove whitespace from the string and return it

@@ -231,11 +231,11 @@ namespace LMS.Controllers
                             where g.Number.Equals(num)
                             join h in db.Classes on g.CId equals h.CId
                             where h.SemesterSeason.Equals(season) && h.SemesterYear.Equals(year)
-                            join s in db.AssignmentCategory on h.ClassId equals s.ClassId
-                            select s.ClassId;
+                            //join s in db.AssignmentCategory on h.ClassId equals s.ClassId
+                            select h.ClassId;
 
                     AssignmentCategory assignCat = new AssignmentCategory();
-                    assignCat.ClassId = query.ToArray()[0];
+                    assignCat.ClassId = query.ToArray()[0]; // TODO: This is throwing an exception because query is null for some reason
                     assignCat.Name = category;
                     assignCat.Weight = (uint?)catweight;
 
