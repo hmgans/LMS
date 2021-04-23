@@ -111,13 +111,11 @@ namespace LMS.Controllers
             using (Team89LMSContext db = new Team89LMSContext())
             {
                 var query = from p in db.Department
-                            where p.Subject.Equals(subject)
                             join g in db.Courses on p.DId equals g.DId
-                            where g.Number.Equals(num)
                             join h in db.Classes on g.CId equals h.CId
-                            where h.SemesterSeason.Equals(season) && h.SemesterYear.Equals(year)
                             join x in db.Enrolled on h.ClassId equals x.ClassId
                             join w in db.Student on x.UId equals w.UId
+                            where h.SemesterSeason.Equals(season) && h.SemesterYear == year && g.Number.Equals(num) && p.Subject.Equals(subject)
                             select new
                             {
                                 fname = w.FirstName,
@@ -155,14 +153,12 @@ namespace LMS.Controllers
             {
 
                 var query = from p in db.Department
-                            where p.Subject.Equals(subject)
                             join g in db.Courses on p.DId equals g.DId
-                            where g.Number.Equals(num)
                             join h in db.Classes on g.CId equals h.CId
-                            where h.SemesterSeason.Equals(season) && h.SemesterYear.Equals(year)
                             join s in db.AssignmentCategory on h.ClassId equals s.ClassId
-                            where s.Name.Equals(category)
                             join w in db.Assignments on s.AcId equals w.AcId
+                            where p.Subject.Equals(subject) && g.Number.Equals(num)
+                            && h.SemesterSeason.Equals(season) && h.SemesterYear == year && s.Name.Equals(category)
                             select new
                             {
                                 aname = w.Name,
@@ -193,12 +189,10 @@ namespace LMS.Controllers
             
 
                 var query = from p in db.Department
-                            where p.Subject.Equals(subject)
                             join g in db.Courses on p.DId equals g.DId
-                            where g.Number.Equals(num)
                             join h in db.Classes on g.CId equals h.CId
-                            where h.SemesterSeason.Equals(season) && h.SemesterYear.Equals(year)
                             join s in db.AssignmentCategory on h.ClassId equals s.ClassId
+                            where p.Subject.Equals(subject) && g.Number.Equals(num) && h.SemesterSeason.Equals(season) && h.SemesterYear == year
                             select new
                             {
                                 name = s.Name,
@@ -224,25 +218,38 @@ namespace LMS.Controllers
         public IActionResult CreateAssignmentCategory(string subject, int num, string season, int year, string category, int catweight)
         {
 
+            var query1 = from p in db.Department
+                        join g in db.Courses on p.DId equals g.DId
+                        join h in db.Classes on g.CId equals h.CId
+                        join w in db.AssignmentCategory on h.ClassId equals w.ClassId
+                        where h.SemesterSeason.Equals(season) && h.SemesterYear == year && g.Number.Equals(num)
+                        && p.Subject.Equals(subject) && w.Name.Equals(category)
+                        select h.ClassId;
+            if( query1.Count() == 1)
+            {
+                return Json(new { success = false });
+            }
 
-                var query = from p in db.Department
-                            where p.Subject.Equals(subject)
+            var query = from p in db.Department
                             join g in db.Courses on p.DId equals g.DId
-                            where g.Number.Equals(num)
                             join h in db.Classes on g.CId equals h.CId
-                            where h.SemesterSeason.Equals(season) && h.SemesterYear.Equals(year)
-                            //join s in db.AssignmentCategory on h.ClassId equals s.ClassId
+                            where h.SemesterSeason.Equals(season) && h.SemesterYear == year && g.Number.Equals(num)
+                            && p.Subject.Equals(subject)
                             select h.ClassId;
 
-                    AssignmentCategory assignCat = new AssignmentCategory();
-                    assignCat.ClassId = query.ToArray()[0]; // TODO: This is throwing an exception because query is null for some reason
-                    assignCat.Name = category;
-                    assignCat.Weight = (uint?)catweight;
+            if (query.Count() == 1)
+            {
+                AssignmentCategory assignCat = new AssignmentCategory();
+                assignCat.ClassId = query.ToArray()[0]; // TODO: This is throwing an exception because query is null for some reason
+                assignCat.Name = category;
+                assignCat.Weight = (uint?)catweight;
 
-                    db.AssignmentCategory.Add(assignCat);
-                    int success = db.SaveChanges();
-                    return Json(new { success = true });
-    
+                db.AssignmentCategory.Add(assignCat);
+                int success = db.SaveChanges();
+                return Json(new { success = true });
+            }
+            return Json(new { success = false });
+
 
         }
 
@@ -264,13 +271,11 @@ namespace LMS.Controllers
         {
 
                 var query = from p in db.Department
-                            where p.Subject.Equals(subject)
                             join g in db.Courses on p.DId equals g.DId
-                            where g.Number.Equals(num)
                             join h in db.Classes on g.CId equals h.CId
-                            where h.SemesterSeason.Equals(season) && h.SemesterYear.Equals(year)
                             join s in db.AssignmentCategory on h.ClassId equals s.ClassId
-                            where s.Name.Equals(category)
+                            where s.Name.Equals(category) && p.Subject.Equals(subject) && g.Number.Equals(num)
+                            && h.SemesterSeason.Equals(season) && h.SemesterYear == year
                             select s.AcId;
 
                     Assignments newAssign = new Assignments();
@@ -308,17 +313,15 @@ namespace LMS.Controllers
 
 
                 var query = from p in db.Department
-                            where p.Subject.Equals(subject)
                             join g in db.Courses on p.DId equals g.DId
-                            where g.Number.Equals(num)
                             join h in db.Classes on g.CId equals h.CId
-                            where h.SemesterSeason.Equals(season) && h.SemesterYear.Equals(year)
                             join s in db.AssignmentCategory on h.ClassId equals s.ClassId
-                            where s.Name.Equals(category)
                             join w in db.Assignments on s.AcId equals w.AcId
-                            where w.Name.Equals(asgname)
                             join x in db.Submissions on w.AssId equals x.AssId
                             join y in db.Student on x.UId equals y.UId
+                            where w.Name.Equals(asgname) && s.Name.Equals(category)
+                            && h.SemesterSeason.Equals(season) && h.SemesterYear == year
+                            && g.Number.Equals(num) && p.Subject.Equals(subject)
                             select new
                             {
                                 fname = y.FirstName,
@@ -348,16 +351,14 @@ namespace LMS.Controllers
         public IActionResult GradeSubmission(string subject, int num, string season, int year, string category, string asgname, string uid, int score)
         {
                 var query = from p in db.Department
-                            where p.Subject.Equals(subject)
                             join g in db.Courses on p.DId equals g.DId
-                            where g.Number.Equals(num)
                             join h in db.Classes on g.CId equals h.CId
-                            where h.SemesterSeason.Equals(season) && h.SemesterYear.Equals(year)
                             join s in db.AssignmentCategory on h.ClassId equals s.ClassId
-                            where s.Name.Equals(category)
                             join w in db.Assignments on s.AcId equals w.AcId
-                            where w.Name.Equals(asgname)
-                            join x in db.Submissions on w.AssId equals x.AssId where x.UId.Equals(uid)
+                            join x in db.Submissions on w.AssId equals x.AssId 
+                            where x.UId.Equals(uid) && w.Name.Equals(asgname) && s.Name.Equals(category)
+                            && h.SemesterSeason.Equals(season) && h.SemesterYear == year 
+                            && g.Number.Equals(num) && p.Subject.Equals(subject)
                             select x;
                 // At this point we have the Submissions for a specific student 
 
@@ -386,10 +387,10 @@ namespace LMS.Controllers
         public IActionResult GetMyClasses(string uid)
         {
                 var query = from p in db.Professor
-                            where p.UId.Equals(uid)
                             join x in db.Classes on p.UId equals x.ProfId
                             join w in db.Courses on x.CId equals w.CId
                             join y in db.Department on w.DId equals y.DId
+                            where p.UId.Equals(uid)
                             select new
                             {
                                 subject = y.Subject,

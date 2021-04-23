@@ -495,7 +495,6 @@ namespace LMS.Controllers
                 var querydID = (from d in db.Department
                                 where d.Subject.Equals(SubjectAbbrev)
                                 select d.DId).Distinct();
-
                 switch (role)
                 {
                     case "Administrator":

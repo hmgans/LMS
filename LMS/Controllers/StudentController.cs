@@ -106,25 +106,43 @@ namespace LMS.Controllers
     public IActionResult GetAssignmentsInClass(string subject, int num, string season, int year, string uid)
     {
             var query = from p in db.Department
-                        where p.Subject.Equals(subject)
                         join g in db.Courses on p.DId equals g.DId
-                        where g.Number.Equals(num)
                         join h in db.Classes on g.CId equals h.CId
-                        where h.SemesterSeason.Equals(season) && h.SemesterYear.Equals(year)
-                        join x in db.Enrolled on h.ClassId equals x.ClassId
-                        join w in db.Student on x.UId equals w.UId
-                        where w.UId.Equals(uid)
                         join z in db.AssignmentCategory on h.ClassId equals z.ClassId
                         join o in db.Assignments on z.AcId equals o.AcId
-                        join e in db.Submissions on o.AssId equals e.AssId
+                        where p.Subject.Equals(subject) && g.Number.Equals(num) && h.SemesterSeason.Equals(season) && h.SemesterYear == year
                         select new
                         {
-                            aname = o.Name,
-                            cname = z.Name,
-                            due = o.DueDate,
-                            score = e.Score
+                            Assignment = o,
+                            AssignmentCat = z
                         };
-      return Json(query.ToArray());
+
+
+
+            var query2 = from q in query
+                         join s in db.Submissions on
+                         new
+                         {
+                             A = q.Assignment.AssId,
+                             B = uid
+                         }
+                         equals new
+                         {
+                             A = s.AssId,
+                             B = s.UId
+
+                         }
+                         into p
+                         from l in p.DefaultIfEmpty() select new
+                         {
+                             aname = q.Assignment.Name,
+                             cname = q.AssignmentCat.Name,
+                             due = q.Assignment.DueDate,
+                             score = l.Score
+                         };
+
+
+      return Json(query2.ToArray());
     }
 
 
@@ -151,19 +169,15 @@ namespace LMS.Controllers
       string category, string asgname, string uid, string contents)
     {
             var query = from p in db.Department
-                        where p.Subject.Equals(subject)
                         join g in db.Courses on p.DId equals g.DId
-                        where g.Number.Equals(num)
                         join h in db.Classes on g.CId equals h.CId
-                        where h.SemesterSeason.Equals(season) && h.SemesterYear.Equals(year)
                         join x in db.Enrolled on h.ClassId equals x.ClassId
                         join w in db.Student on x.UId equals w.UId
-                        where w.UId.Equals(uid)
                         join z in db.AssignmentCategory on h.ClassId equals z.ClassId
-                        where z.Name.Equals(category)
                         join o in db.Assignments on z.AcId equals o.AcId
-                        where o.Name.Equals(asgname)
                         join e in db.Submissions on o.AssId equals e.AssId
+                        where p.Subject.Equals(subject) && g.Number.Equals(num) && h.SemesterSeason.Equals(season) && h.SemesterYear == year
+                        && w.UId.Equals(uid) && z.Name.Equals(category) && o.Name.Equals(asgname)
                         select e;
             //Update Submission
             if(query.Count() == 1)
@@ -172,29 +186,27 @@ namespace LMS.Controllers
                 query.ToArray()[0].Time = DateTime.Now;
                 query.ToArray()[0].Score = 0;
                 db.SaveChanges();
+                return Json(new { success = true });
             }
             else // Create Submission if it doesnt exist 
             {
-                query = (IQueryable<Submissions>)(from p in db.Department
-                            where p.Subject.Equals(subject)
+                var query2 = from p in db.Department
                             join g in db.Courses on p.DId equals g.DId
-                            where g.Number.Equals(num)
                             join h in db.Classes on g.CId equals h.CId
-                            where h.SemesterSeason.Equals(season) && h.SemesterYear.Equals(year)
                             join x in db.Enrolled on h.ClassId equals x.ClassId
                             join w in db.Student on x.UId equals w.UId
-                            where w.UId.Equals(uid)
                             join z in db.AssignmentCategory on h.ClassId equals z.ClassId
-                            where z.Name.Equals(category)
                             join o in db.Assignments on z.AcId equals o.AcId
-                            where o.Name.Equals(asgname)
-                            select o);
+                            where o.Name.Equals(asgname) && p.Subject.Equals(subject) && g.Number.Equals(num)
+                            && h.SemesterSeason.Equals(season) && h.SemesterYear == year && w.UId.Equals(uid)
+                            && z.Name.Equals(category)
+                             select o;
 
-                if (query.Count() == 1)
+                if (query2.Count() == 1)
                 {
                     Submissions sub = new Submissions();
                     sub.UId = uid;
-                    sub.AssId = query.ToArray()[0].AssId;
+                    sub.AssId = query2.ToArray()[0].AssId;
                     sub.Time = DateTime.Now;
                     sub.Contents = contents;
                     sub.Score = 0;
@@ -222,12 +234,11 @@ namespace LMS.Controllers
     public IActionResult Enroll(string subject, int num, string season, int year, string uid)
     {
             var query = from p in db.Department
-                        where p.Subject.Equals(subject)
                         join g in db.Courses on p.DId equals g.DId
-                        where g.Number.Equals(num)
                         join h in db.Classes on g.CId equals h.CId
-                        where h.SemesterSeason.Equals(season) && h.SemesterYear.Equals(year)
                         join x in db.Enrolled on h.ClassId equals x.ClassId where x.UId.Equals(uid)
+                        where p.Subject.Equals(subject) && g.Number.Equals(num) && h.SemesterSeason.Equals(season) &&
+                        h.SemesterYear == year
                         select x;
 
             if(query.Count() == 1)// If Student already exists return false
@@ -236,18 +247,17 @@ namespace LMS.Controllers
             }
             else
             {
-                query = from p in db.Department
-                        where p.Subject.Equals(subject)
+               var query2 = from p in db.Department
                         join g in db.Courses on p.DId equals g.DId
-                        where g.Number.Equals(num)
                         join h in db.Classes on g.CId equals h.CId
-                        where h.SemesterSeason.Equals(season) && h.SemesterYear.Equals(year)
-                        join w in db.Enrolled on h.ClassId equals w.ClassId
-                        select w;
-                if(query.Count() == 1)
+                        where h.SemesterSeason.Equals(season) && h.SemesterYear == year
+                        && p.Subject.Equals(subject) && g.Number.Equals(num)
+                        select h;
+
+                if(query2.Count() == 1)
                 {
                     Enrolled enroll = new Enrolled();
-                    enroll.ClassId = query.ToArray()[0].ClassId;
+                    enroll.ClassId = query2.ToArray()[0].ClassId;
                     enroll.UId = uid;
                     enroll.Grade = "--";
                     db.Enrolled.Add(enroll);
@@ -331,14 +341,12 @@ namespace LMS.Controllers
 
             }
             double result = GPATotal / TotalClasses;
+            if(TotalClasses == 0)
+            {
+                return Json(new { gpa = 0.0 });
+            }
 
             return Json(new { gpa = result });
-
-
-
-
-
-            return Json(null);
     }
 
     /*******End code to modify********/

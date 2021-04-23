@@ -149,7 +149,7 @@ namespace LMS.Controllers
                         join c in db.Courses on d.DId equals c.DId
                         where c.Number.Equals(num)
                         join cl in db.Classes on c.CId equals cl.CId
-                        where cl.SemesterSeason.Equals(season) && cl.SemesterYear.Equals(year)
+                        where cl.SemesterSeason.Equals(season) && cl.SemesterYear == year
                         join ac in db.AssignmentCategory on cl.ClassId equals ac.ClassId
                         where ac.Name.Equals(category)
                         join a in db.Assignments on ac.AcId equals a.AcId
@@ -177,17 +177,15 @@ namespace LMS.Controllers
     public IActionResult GetSubmissionText(string subject, int num, string season, int year, string category, string asgname, string uid)
     {
             var query = from d in db.Department
-                        where d.Subject.Equals(subject)
                         join c in db.Courses on d.DId equals c.DId
-                        where c.Number.Equals(num)
                         join cl in db.Classes on c.CId equals cl.CId
-                        where cl.SemesterSeason.Equals(season) && cl.SemesterYear.Equals(year)
                         join ac in db.AssignmentCategory on cl.ClassId equals ac.ClassId
-                        where ac.Name.Equals(category)
                         join a in db.Assignments on ac.AcId equals a.AcId
-                        where a.Name.Equals(asgname)
                         join s in db.Submissions on a.AssId equals s.AssId into result
-                        from r in result.DefaultIfEmpty() where r.UId.Equals(uid)
+                        from r in result.DefaultIfEmpty()
+                        where r.UId.Equals(uid) && a.Name.Equals(asgname) && ac.Name.Equals(category)
+                        && cl.SemesterSeason.Equals(season) && cl.SemesterYear == year && c.Number.Equals(num)
+                        && d.Subject.Equals(subject)
                         select new
                         {
                            contents = r == null ? "" : r.Contents
@@ -228,7 +226,7 @@ namespace LMS.Controllers
 
             if (query1.Any()) // if query1 is successful
             {
-                return Json(query1.ToArray());
+                return Json(query1.ToArray()[0]);
             }
 
             var query2 = from p in db.Professor
@@ -244,7 +242,7 @@ namespace LMS.Controllers
 
             if (query2.Any()) // if query2 is successful
             {
-                return Json(query2.ToArray());
+                return Json(query2.ToArray()[0]);
             }
 
             var query3 = from a in db.Administrator
@@ -258,7 +256,7 @@ namespace LMS.Controllers
 
             if (query3.Any()) // if query3 is successful
             {
-                return Json(query3.ToArray());
+                return Json(query3.ToArray()[0]);
             }
 
 
