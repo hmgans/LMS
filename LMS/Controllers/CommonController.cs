@@ -76,18 +76,16 @@ namespace LMS.Controllers
     /// <returns>The JSON array</returns>
     public IActionResult GetCatalog()
     {
-            var query = from c in db.Courses
-                        join d in db.Department on c.DId equals d.DId
+            var query = from d in db.Department
                         select new
                         {
                             subject = d.Subject,
                             dname = d.Name,
-                            courses = from w in db.Courses where w.DId.Equals(d.DId)
-                                      select new
-                                      {
-                                          number = w.Number,
-                                          cname = w.Name
-                                      }
+                            courses = from course in d.Courses select new
+                            {
+                                number = course.Number,
+                                cname = course.Name
+                            }
                         };
 
             return Json(query.ToArray());
@@ -144,18 +142,16 @@ namespace LMS.Controllers
     public IActionResult GetAssignmentContents(string subject, int num, string season, int year, string category, string asgname)
     {
             var query = from d in db.Department
-                        where d.Subject.Equals(subject)
                         join c in db.Courses on d.DId equals c.DId
-                        where c.Number.Equals(num)
                         join cl in db.Classes on c.CId equals cl.CId
-                        where cl.SemesterSeason.Equals(season) && cl.SemesterYear == year
                         join ac in db.AssignmentCategory on cl.ClassId equals ac.ClassId
-                        where ac.Name.Equals(category)
-                        join a in db.Assignments on ac.AcId equals a.AcId
-                        where a.Name.Equals(asgname)
-                        select a.Contents;
+                        join a in db.Assignments on ac.AcId equals a.AcId into result
+                        from r in result.DefaultIfEmpty()
+                        where r.Name.Equals(asgname) && d.Subject.Equals(subject) && c.Number.Equals(num)
+                        && cl.SemesterSeason.Equals(season) && cl.SemesterYear == year && ac.Name.Equals(category)
+                        select r.Contents;
 
-            return Content(query.ToArray()[0]);
+            return Content(query.ToArray()[0]); // is this the right way to return the query as a string?
     }
 
 
@@ -187,18 +183,10 @@ namespace LMS.Controllers
                         && d.Subject.Equals(subject)
                         select new
                         {
-                            contents = (r == null) ? "" : r.Contents
+                           contents = r.Contents
                         };
 
-            // dumb workaround to get the first value in query without the compiler getting mad
-            // "cannot convert from '<anonymous type: string contents>' to 'string'" when returning query.ToArray()[0] 
-            string ret = "";
-            foreach (var r in query)
-            {
-                ret = r.contents;
-            }
-            
-            return Content(ret);
+            return Content(query.ToArray()[0].contents);
     }
 
 

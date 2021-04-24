@@ -147,7 +147,7 @@ namespace LMS.Controllers
         /// <returns>The JSON array</returns>
         public IActionResult GetAssignmentsInCategory(string subject, int num, string season, int year, string category)
         {
-            using (Team89LMSContext db = new Team89LMSContext())
+            if (category != null)
             {
                 if (category == null)
                 {
@@ -181,10 +181,30 @@ namespace LMS.Controllers
                                 aname = w.Name,
                                 cname = s.Name,
                                 due = w.DueDate,
-                                submissions = w.Submissions.Count
+                                submissions = (from q in db.Submissions where q.AssId.Equals(w.AssId) select q).Count()
                             };
                 return Json(query.ToArray());
             }
+            else
+            {
+                var query = from p in db.Department
+                            join g in db.Courses on p.DId equals g.DId
+                            join h in db.Classes on g.CId equals h.CId
+                            join s in db.AssignmentCategory on h.ClassId equals s.ClassId
+                            join w in db.Assignments on s.AcId equals w.AcId
+                            where p.Subject.Equals(subject) && g.Number.Equals(num)
+                            && h.SemesterSeason.Equals(season) && h.SemesterYear == year
+                            select new
+                            {
+                                aname = w.Name,
+                                cname = s.Name,
+                                due = w.DueDate,
+                                submissions = (from q in db.Submissions where q.AssId.Equals(w.AssId) select q).Count()
+                            };
+                return Json(query.ToArray());
+            }
+
+            
         }
 
 
