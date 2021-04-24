@@ -151,7 +151,7 @@ namespace LMS.Controllers
                         && cl.SemesterSeason.Equals(season) && cl.SemesterYear == year && ac.Name.Equals(category)
                         select r.Contents;
 
-            return Content(query.ToArray()[0]); // is this the right way to return the query as a string?
+            return Content(query.ToArray()[0]);
     }
 
 

@@ -149,26 +149,6 @@ namespace LMS.Controllers
         {
             if (category != null)
             {
-                if (category == null)
-                {
-                    var nullCatQuery = from p in db.Department
-                                       join g in db.Courses on p.DId equals g.DId
-                                       join h in db.Classes on g.CId equals h.CId
-                                       join s in db.AssignmentCategory on h.ClassId equals s.ClassId
-                                       join w in db.Assignments on s.AcId equals w.AcId
-                                       where p.Subject.Equals(subject) && g.Number.Equals(num)
-                                       && h.SemesterSeason.Equals(season) && h.SemesterYear == year
-                                       select new
-                                       {
-                                           aname = w.Name,
-                                           cname = s.Name,
-                                           due = w.DueDate,
-                                           submissions = w.Submissions.Count
-                                       };
-
-                    return Json(nullCatQuery.ToArray());
-                }
-
                 var query = from p in db.Department
                             join g in db.Courses on p.DId equals g.DId
                             join h in db.Classes on g.CId equals h.CId
@@ -203,8 +183,6 @@ namespace LMS.Controllers
                             };
                 return Json(query.ToArray());
             }
-
-            
         }
 
 
@@ -420,7 +398,6 @@ namespace LMS.Controllers
                                 season = x.SemesterSeason,
                                 year = x.SemesterYear
                             };
-                           
 
                 return Json(query.ToArray());
         }
