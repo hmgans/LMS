@@ -282,16 +282,30 @@ namespace LMS.Controllers
                             join s in db.AssignmentCategory on h.ClassId equals s.ClassId
                             where s.Name.Equals(category) && p.Subject.Equals(subject) && g.Number.Equals(num)
                             && h.SemesterSeason.Equals(season) && h.SemesterYear == year
-                            select s.AcId;
+                            select new
+                            {
+                                ACID = s.AcId,
+                                ClassID = s.ClassId
+                            };
 
                     Assignments newAssign = new Assignments();
-                    newAssign.AcId = query.ToArray()[0];
+                    newAssign.AcId = query.ToArray()[0].ACID;
                     newAssign.Name = asgname;
                     newAssign.DueDate = asgdue;
                     newAssign.Contents = asgcontents;
                     newAssign.Points = (uint?)asgpoints;
                     db.Assignments.Add(newAssign);
                     db.SaveChanges();
+
+            // Time to recalculate Grades
+
+            var AllStudents = from p in db.Enrolled
+                              where p.ClassId.Equals(query.ToArray()[0].ClassID)
+                              select p;
+            foreach(Enrolled student in AllStudents)
+            {
+
+            }
 
                     return Json(new { success = true });
         }
