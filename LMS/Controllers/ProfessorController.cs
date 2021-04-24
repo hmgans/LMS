@@ -304,7 +304,38 @@ namespace LMS.Controllers
                               select p;
             foreach(Enrolled student in AllStudents)
             {
+                var AllCategories = from p in db.AssignmentCategory
+                                    where p.ClassId.Equals(student.ClassId)
+                                    select p;
+                double TotalWeights = 0.0;
+                double studentTotal = 0.0;
+                foreach( AssignmentCategory AssignCat in AllCategories)
+                {
+                    TotalWeights += (int)AssignCat.Weight;
 
+                    int AssignmentTotal = 0;
+                    int StudentTotal = 0;
+                    foreach(Assignments Assignments in AssignCat.Assignments)
+                    {
+                        int submissionScore = 0;
+                        foreach(Submissions submission in Assignments.Submissions)
+                        {
+                            submissionScore = (int)submission.Score;
+                        }
+                        StudentTotal += submissionScore;
+                        AssignmentTotal += (int)Assignments.Points;
+                        // At this point we have the Score of a student for on assignment in a category
+                    }
+                    // At this point we have the total score of a student and total amount of points possible
+                    double CategoryScore = (double)StudentTotal / AssignmentTotal;
+
+                    studentTotal += CategoryScore * (int)AssignCat.Weight; // Total before rescaling Step: 4
+                }
+                double newScaleFactor = 100 / TotalWeights;
+                double newClassScore = newScaleFactor * studentTotal;
+
+                student.Grade = LetterGrade(newClassScore);
+                db.SaveChanges();
             }
 
                     return Json(new { success = true });
@@ -465,6 +496,58 @@ namespace LMS.Controllers
             //db.SaveChanges();
 
             return classGrade;
+        }
+
+        private String LetterGrade(double score)
+        {
+            if(score >= 93)
+            {
+                return "A";
+            }
+            else if(score >= 90)
+            {
+                return "A-";
+            }
+            else if(score >= 87)
+            {
+                return "B+";
+            }
+            else if (score >= 83)
+            {
+                return "B";
+            }
+            else if (score >= 80)
+            {
+                return "B-";
+            }
+            else if (score >= 77)
+            {
+                return "C+";
+            }
+            else if (score >= 73)
+            {
+                return "C";
+            }
+            else if (score >= 70)
+            {
+                return "C-";
+            }
+            else if (score >= 67)
+            {
+                return "D+";
+            }
+            else if (score >= 63)
+            {
+                return "D";
+            }
+            else if (score >= 60)
+            {
+                return "D-";
+            }
+            else
+            {
+                return "E";
+            }
         }
 
         #endregion
