@@ -288,57 +288,19 @@ namespace LMS.Controllers
                                 ClassID = s.ClassId
                             };
 
-                    Assignments newAssign = new Assignments();
-                    newAssign.AcId = query.ToArray()[0].ACID;
-                    newAssign.Name = asgname;
-                    newAssign.DueDate = asgdue;
-                    newAssign.Contents = asgcontents;
-                    newAssign.Points = (uint?)asgpoints;
-                    db.Assignments.Add(newAssign);
-                    db.SaveChanges();
-
-            // Time to recalculate Grades
-
-            var AllStudents = from p in db.Enrolled
-                              where p.ClassId.Equals(query.ToArray()[0].ClassID)
-                              select p;
-            foreach(Enrolled student in AllStudents)
-            {
-                var AllCategories = from p in db.AssignmentCategory
-                                    where p.ClassId.Equals(student.ClassId)
-                                    select p;
-                double TotalWeights = 0.0;
-                double studentTotal = 0.0;
-                foreach( AssignmentCategory AssignCat in AllCategories)
-                {
-                    TotalWeights += (int)AssignCat.Weight;
-
-                    int AssignmentTotal = 0;
-                    int StudentTotal = 0;
-                    foreach(Assignments Assignments in AssignCat.Assignments)
-                    {
-                        int submissionScore = 0;
-                        foreach(Submissions submission in Assignments.Submissions)
-                        {
-                            submissionScore = (int)submission.Score;
-                        }
-                        StudentTotal += submissionScore;
-                        AssignmentTotal += (int)Assignments.Points;
-                        // At this point we have the Score of a student for on assignment in a category
-                    }
-                    // At this point we have the total score of a student and total amount of points possible
-                    double CategoryScore = (double)StudentTotal / AssignmentTotal;
-
-                    studentTotal += CategoryScore * (int)AssignCat.Weight; // Total before rescaling Step: 4
-                }
-                double newScaleFactor = 100 / TotalWeights;
-                double newClassScore = newScaleFactor * studentTotal;
-
-                student.Grade = LetterGrade(newClassScore);
+                Assignments newAssign = new Assignments();
+                newAssign.AcId = query.ToArray()[0].ACID;
+                newAssign.Name = asgname;
+                newAssign.DueDate = asgdue;
+                newAssign.Contents = asgcontents;
+                newAssign.Points = (uint?)asgpoints;
+                db.Assignments.Add(newAssign);
                 db.SaveChanges();
-            }
 
-                    return Json(new { success = true });
+                // Recalculate grades for all students
+                CalculateAllGrades(query.ToArray()[0].ClassID);
+
+                return Json(new { success = true });
         }
 
 
@@ -413,7 +375,7 @@ namespace LMS.Controllers
                 query.ToArray()[0].Score = (uint?)score;
                 db.SaveChanges();
 
-                CalculateGrade(subject, num, season, year, uid, category);
+                CalculateStudentGrade(uid, query.ToArray()[0].AssId);
 
                 return Json(new { success = true });
         }
@@ -458,44 +420,116 @@ namespace LMS.Controllers
         /// Calculates a student's current grade in the class
         /// </summary>
         /// <returns>An integer value for grade</returns>
-        private int CalculateGrade(string subject, int num, string season, int year, string uid, string category)
+        private void CalculateStudentGrade(string uid, int assID)
         {
-            // get all assignments in category
-            var query = from d in db.Department
-                        join c in db.Courses on d.DId equals c.DId
-                        join cl in db.Classes on c.CId equals cl.CId
-                        join ac in db.AssignmentCategory on cl.ClassId equals ac.ClassId
-                        join a in db.Assignments on ac.AcId equals a.AcId
-                        //join s in db.Submissions on a.AssId equals s.AssId
-                        //join e in db.Enrolled on s.UId equals e.UId
-                        where /*s.UId.Equals(uid) && */ac.Name.Equals(category)
-                        && cl.SemesterSeason.Equals(season) && cl.SemesterYear == year
-                        && c.Number.Equals(num) && d.Subject.Equals(subject)
-                        select a;
+            var getClassID = from s in db.Submissions
+                                join a in db.Assignments on s.AssId equals a.AssId
+                                join ac in db.AssignmentCategory on a.AcId equals ac.AcId
+                                where a.AssId.Equals(assID)
+                                select ac.ClassId;
+            int classID = getClassID.ToArray()[0];
 
-            // sum up total assignment points
-            int pointTotal = 0;
-            int stuScoreTotal = 0;
-            foreach (Assignments a in query)
+            var AllCategories = from ac in db.AssignmentCategory
+                                where ac.ClassId.Equals(classID)
+                                select ac;
+
+            double TotalWeights = 0.0;
+            double studentTotal = 0.0;
+            foreach (AssignmentCategory AssignCat in AllCategories)
             {
-                pointTotal += (int) a.Points;
-                foreach (Submissions s in a.Submissions)
+                var AllCatAssignments = from a in db.Assignments
+                                        where a.AcId.Equals(AssignCat.AcId)
+                                        select a;
+
+                if (AllCatAssignments.ToArray().Count() != 0)
+                    TotalWeights += (int)AssignCat.Weight;
+
+                int assignTotal = 0;
+                int stuAssignTotal = 0;
+                foreach (Assignments Assignments in AllCatAssignments)
                 {
-                    // sum up grades (submission score) for each assignment
-                    if (s.UId == uid)
+                    var AllAssignSubs = from s in db.Submissions
+                                        where s.AssId.Equals(Assignments.AssId)
+                                        select s;
+
+                    int submissionScore = 0;
+                    foreach (Submissions submission in AllAssignSubs)
                     {
-                        stuScoreTotal += (int) s.Score;
+                        submissionScore = (int)submission.Score;
                     }
+                    stuAssignTotal += submissionScore;
+                    assignTotal += (int)Assignments.Points;
+                    // At this point we have the Score of a student for on assignment in a category
                 }
+                // At this point we have the total score of a student and total amount of points possible
+                double catScore = 0;
+                if (assignTotal != 0)
+                    catScore = (double)stuAssignTotal / assignTotal;
+
+                studentTotal += catScore * (int)AssignCat.Weight; // Total before rescaling Step: 4
             }
+            double newScaleFactor = 100 / TotalWeights;
+            double newClassScore = newScaleFactor * studentTotal;
 
-            int classGrade = stuScoreTotal / pointTotal;
+            var student = from e in db.Enrolled
+                          where e.UId.Equals(uid) && e.ClassId.Equals(classID)
+                          select e;
 
-            // update grade saved in db
-            //query.ToArray()[0].Score = (uint?)score;
-            //db.SaveChanges();
+            student.ToArray()[0].Grade = LetterGrade(newClassScore);
+            db.SaveChanges();
+        }
 
-            return classGrade;
+        private void CalculateAllGrades(int classID)
+        {
+            var AllStudents = from p in db.Enrolled
+                              where p.ClassId.Equals(classID)
+                              select p;
+            foreach (Enrolled student in AllStudents)
+            {
+                var AllCategories = from p in db.AssignmentCategory
+                                    where p.ClassId.Equals(student.ClassId)
+                                    select p;
+                double TotalWeights = 0.0;
+                double studentTotal = 0.0;
+                foreach (AssignmentCategory AssignCat in AllCategories)
+                {
+                    var AllCatAssignments = from a in db.Assignments
+                                            where a.AcId.Equals(AssignCat.AcId)
+                                            select a;
+
+                    if (AllCatAssignments.ToArray().Count() != 0)
+                        TotalWeights += (int)AssignCat.Weight;
+
+                    int assignTotal = 0;
+                    int stuAssignTotal = 0;
+                    foreach (Assignments Assignments in AllCatAssignments)
+                    {
+                        var AllAssignSubs = from s in db.Submissions
+                                            where s.AssId.Equals(Assignments.AssId)
+                                            select s;
+
+                        int submissionScore = 0;
+                        foreach (Submissions submission in AllAssignSubs)
+                        {
+                            submissionScore = (int)submission.Score;
+                        }
+                        stuAssignTotal += submissionScore;
+                        assignTotal += (int)Assignments.Points;
+                        // At this point we have the Score of a student for on assignment in a category
+                    }
+                    // At this point we have the total score of a student and total amount of points possible
+                    double catScore = 0;
+                    if (assignTotal != 0)
+                        catScore = (double)stuAssignTotal / assignTotal;
+
+                    studentTotal += catScore * (int)AssignCat.Weight; // Total before rescaling Step: 4
+                }
+                double newScaleFactor = 100 / TotalWeights;
+                double newClassScore = newScaleFactor * studentTotal;
+
+                student.Grade = LetterGrade(newClassScore);
+                db.SaveChanges();
+            }
         }
 
         private String LetterGrade(double score)
