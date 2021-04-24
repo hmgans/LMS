@@ -410,43 +410,47 @@ namespace LMS.Controllers
         #region Helpers
 
         /// <summary>
-        /// Calculates the grade for a an assignment
+        /// Calculates a student's current grade in the class
         /// </summary>
-        /// <returns>A new uID that's 1 larger than the current highest uID</returns>
+        /// <returns>An integer value for grade</returns>
         private int CalculateGrade(string subject, int num, string season, int year, string uid, string category)
         {
+            // get all assignments in category
             var query = from d in db.Department
                         join c in db.Courses on d.DId equals c.DId
                         join cl in db.Classes on c.CId equals cl.CId
                         join ac in db.AssignmentCategory on cl.ClassId equals ac.ClassId
                         join a in db.Assignments on ac.AcId equals a.AcId
-                        join s in db.Submissions on a.AssId equals s.AssId
-                        join e in db.Enrolled on s.UId equals e.UId
-                        where s.UId.Equals(uid) && ac.Name.Equals(category)
+                        //join s in db.Submissions on a.AssId equals s.AssId
+                        //join e in db.Enrolled on s.UId equals e.UId
+                        where /*s.UId.Equals(uid) && */ac.Name.Equals(category)
                         && cl.SemesterSeason.Equals(season) && cl.SemesterYear == year
                         && c.Number.Equals(num) && d.Subject.Equals(subject)
-                        select new
-                        {
-                            uid = s.UId,
-                            score = s.Score,
-                            points = a.Points
-                        };
+                        select a;
 
+            // sum up total assignment points
             int pointTotal = 0;
-            int stuPointTotal = 0;
-            foreach (var q in query)
+            int stuScoreTotal = 0;
+            foreach (Assignments a in query)
             {
-                pointTotal += (int)q.points;
-                stuPointTotal += (int)q.score;
+                pointTotal += (int) a.Points;
+                foreach (Submissions s in a.Submissions)
+                {
+                    // sum up grades (submission score) for each assignment
+                    if (s.UId == uid)
+                    {
+                        stuScoreTotal += (int) s.Score;
+                    }
+                }
             }
 
-            int classGrade = stuPointTotal / pointTotal;
+            int classGrade = stuScoreTotal / pointTotal;
 
             // update grade saved in db
             //query.ToArray()[0].Score = (uint?)score;
             //db.SaveChanges();
 
-            return 0;
+            return classGrade;
         }
 
         #endregion
