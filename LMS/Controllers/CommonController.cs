@@ -171,6 +171,7 @@ namespace LMS.Controllers
     /// <returns>The submission text</returns>
     public IActionResult GetSubmissionText(string subject, int num, string season, int year, string category, string asgname, string uid)
     {
+
             var query = from d in db.Department
                         join c in db.Courses on d.DId equals c.DId
                         join cl in db.Classes on c.CId equals cl.CId
@@ -185,8 +186,11 @@ namespace LMS.Controllers
                         {
                            contents = r.Contents
                         };
-
-            return Content(query.ToArray()[0].contents);
+            if (query.Count() == 1)
+            {
+                return Content(query.ToArray()[0].contents);
+            }
+            return Content("");
     }
 
 

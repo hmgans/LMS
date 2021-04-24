@@ -168,7 +168,7 @@ namespace LMS.Controllers
     public IActionResult SubmitAssignmentText(string subject, int num, string season, int year, 
       string category, string asgname, string uid, string contents)
     {
-            var query = from p in db.Department
+            var query = (from p in db.Department
                         join g in db.Courses on p.DId equals g.DId
                         join h in db.Classes on g.CId equals h.CId
                         join x in db.Enrolled on h.ClassId equals x.ClassId
@@ -177,8 +177,8 @@ namespace LMS.Controllers
                         join o in db.Assignments on z.AcId equals o.AcId
                         join e in db.Submissions on o.AssId equals e.AssId
                         where p.Subject.Equals(subject) && g.Number.Equals(num) && h.SemesterSeason.Equals(season) && h.SemesterYear == year
-                        && w.UId.Equals(uid) && z.Name.Equals(category) && o.Name.Equals(asgname)
-                        select e;
+                        && e.UId.Equals(uid) && z.Name.Equals(category) && o.Name.Equals(asgname)
+                        select e).Distinct();
 
             //Update Submission
             if(query.Count() == 1)
@@ -191,7 +191,7 @@ namespace LMS.Controllers
             }
             else // Create Submission if it doesnt exist 
             {
-                var query2 = from p in db.Department
+                var query2 = (from p in db.Department
                             join g in db.Courses on p.DId equals g.DId
                             join h in db.Classes on g.CId equals h.CId
                             join x in db.Enrolled on h.ClassId equals x.ClassId
@@ -199,9 +199,9 @@ namespace LMS.Controllers
                             join z in db.AssignmentCategory on h.ClassId equals z.ClassId
                             join o in db.Assignments on z.AcId equals o.AcId
                             where o.Name.Equals(asgname) && p.Subject.Equals(subject) && g.Number.Equals(num)
-                            && h.SemesterSeason.Equals(season) && h.SemesterYear == year && w.UId.Equals(uid)
+                            && h.SemesterSeason.Equals(season) && h.SemesterYear == year
                             && z.Name.Equals(category)
-                            select o;
+                            select o).Distinct();
 
                 if (query2.Count() == 1)
                 {
