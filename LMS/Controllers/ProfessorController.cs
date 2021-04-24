@@ -368,6 +368,8 @@ namespace LMS.Controllers
                 query.ToArray()[0].Score = (uint?)score;
                 db.SaveChanges();
 
+                CalculateGrade(subject, num, season, year, uid, category);
+
                 return Json(new { success = true });
         }
 
@@ -405,5 +407,48 @@ namespace LMS.Controllers
 
         /*******End code to modify********/
 
+        #region Helpers
+
+        /// <summary>
+        /// Calculates the grade for a an assignment
+        /// </summary>
+        /// <returns>A new uID that's 1 larger than the current highest uID</returns>
+        private int CalculateGrade(string subject, int num, string season, int year, string uid, string category)
+        {
+            var query = from d in db.Department
+                        join c in db.Courses on d.DId equals c.DId
+                        join cl in db.Classes on c.CId equals cl.CId
+                        join ac in db.AssignmentCategory on cl.ClassId equals ac.ClassId
+                        join a in db.Assignments on ac.AcId equals a.AcId
+                        join s in db.Submissions on a.AssId equals s.AssId
+                        join e in db.Enrolled on s.UId equals e.UId
+                        where s.UId.Equals(uid) && ac.Name.Equals(category)
+                        && cl.SemesterSeason.Equals(season) && cl.SemesterYear == year
+                        && c.Number.Equals(num) && d.Subject.Equals(subject)
+                        select new
+                        {
+                            uid = s.UId,
+                            score = s.Score,
+                            points = a.Points
+                        };
+
+            int pointTotal = 0;
+            int stuPointTotal = 0;
+            foreach (var q in query)
+            {
+                pointTotal += (int)q.points;
+                stuPointTotal += (int)q.score;
+            }
+
+            int classGrade = stuPointTotal / pointTotal;
+
+            // update grade saved in db
+            //query.ToArray()[0].Score = (uint?)score;
+            //db.SaveChanges();
+
+            return 0;
+        }
+
+        #endregion
     }
 }
