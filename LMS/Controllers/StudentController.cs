@@ -179,6 +179,7 @@ namespace LMS.Controllers
                         where p.Subject.Equals(subject) && g.Number.Equals(num) && h.SemesterSeason.Equals(season) && h.SemesterYear == year
                         && w.UId.Equals(uid) && z.Name.Equals(category) && o.Name.Equals(asgname)
                         select e;
+
             //Update Submission
             if(query.Count() == 1)
             {
@@ -200,7 +201,7 @@ namespace LMS.Controllers
                             where o.Name.Equals(asgname) && p.Subject.Equals(subject) && g.Number.Equals(num)
                             && h.SemesterSeason.Equals(season) && h.SemesterYear == year && w.UId.Equals(uid)
                             && z.Name.Equals(category)
-                             select o;
+                            select o;
 
                 if (query2.Count() == 1)
                 {
@@ -214,8 +215,6 @@ namespace LMS.Controllers
                     db.SaveChanges();
                     return Json(new { success = true });
                 }
-
-
             }
             return Json(new { success = false });
     }
@@ -265,9 +264,6 @@ namespace LMS.Controllers
                     return Json(new { success = true });
 
                 }
-                
-
-
             }
 
       return Json(new { success = false });
@@ -291,6 +287,7 @@ namespace LMS.Controllers
             var query = from p in db.Enrolled
                         where p.UId.Equals(uid)
                         select p;
+
             //Get all Enrolled Classes
             double GPATotal = 0.0;
             int TotalClasses = 0;

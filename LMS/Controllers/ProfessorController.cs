@@ -106,8 +106,6 @@ namespace LMS.Controllers
         /// <returns>The JSON array</returns>
         public IActionResult GetStudentsInClass(string subject, int num, string season, int year)
         {
-
-
             using (Team89LMSContext db = new Team89LMSContext())
             {
                 var query = from p in db.Department
@@ -151,6 +149,25 @@ namespace LMS.Controllers
         {
             using (Team89LMSContext db = new Team89LMSContext())
             {
+                if (category == null)
+                {
+                    var nullCatQuery = from p in db.Department
+                                       join g in db.Courses on p.DId equals g.DId
+                                       join h in db.Classes on g.CId equals h.CId
+                                       join s in db.AssignmentCategory on h.ClassId equals s.ClassId
+                                       join w in db.Assignments on s.AcId equals w.AcId
+                                       where p.Subject.Equals(subject) && g.Number.Equals(num)
+                                       && h.SemesterSeason.Equals(season) && h.SemesterYear == year
+                                       select new
+                                       {
+                                           aname = w.Name,
+                                           cname = s.Name,
+                                           due = w.DueDate,
+                                           submissions = w.Submissions.Count
+                                       };
+
+                    return Json(nullCatQuery.ToArray());
+                }
 
                 var query = from p in db.Department
                             join g in db.Courses on p.DId equals g.DId
@@ -164,10 +181,9 @@ namespace LMS.Controllers
                                 aname = w.Name,
                                 cname = s.Name,
                                 due = w.DueDate,
-                                submissions = w.Submissions
+                                submissions = w.Submissions.Count
                             };
                 return Json(query.ToArray());
-
             }
         }
 
@@ -186,8 +202,6 @@ namespace LMS.Controllers
         /// <returns>The JSON array</returns>
         public IActionResult GetAssignmentCategories(string subject, int num, string season, int year)
         {
-            
-
                 var query = from p in db.Department
                             join g in db.Courses on p.DId equals g.DId
                             join h in db.Classes on g.CId equals h.CId
@@ -200,8 +214,6 @@ namespace LMS.Controllers
                             };
 
                 return Json(query.ToArray());
-
-            
         }
 
         /// <summary>
@@ -217,7 +229,6 @@ namespace LMS.Controllers
         ///	false if an assignment category with the same name already exists in the same class.</returns>
         public IActionResult CreateAssignmentCategory(string subject, int num, string season, int year, string category, int catweight)
         {
-
             var query1 = from p in db.Department
                         join g in db.Courses on p.DId equals g.DId
                         join h in db.Classes on g.CId equals h.CId
@@ -249,8 +260,6 @@ namespace LMS.Controllers
                 return Json(new { success = true });
             }
             return Json(new { success = false });
-
-
         }
 
         /// <summary>
@@ -269,7 +278,6 @@ namespace LMS.Controllers
         /// false if an assignment with the same name already exists in the same assignment category.</returns>
         public IActionResult CreateAssignment(string subject, int num, string season, int year, string category, string asgname, int asgpoints, DateTime asgdue, string asgcontents)
         {
-
                 var query = from p in db.Department
                             join g in db.Courses on p.DId equals g.DId
                             join h in db.Classes on g.CId equals h.CId
@@ -310,8 +318,6 @@ namespace LMS.Controllers
         /// <returns>The JSON array</returns>
         public IActionResult GetSubmissionsToAssignment(string subject, int num, string season, int year, string category, string asgname)
         {
-
-
                 var query = from p in db.Department
                             join g in db.Courses on p.DId equals g.DId
                             join h in db.Classes on g.CId equals h.CId
@@ -332,7 +338,6 @@ namespace LMS.Controllers
                             };
 
                 return Json(query.ToArray());
-            
         }
 
 
@@ -366,10 +371,6 @@ namespace LMS.Controllers
                 db.SaveChanges();
 
                 return Json(new { success = true });
-
-            
-
-            
         }
 
 
@@ -402,9 +403,6 @@ namespace LMS.Controllers
                            
 
                 return Json(query.ToArray());
-
-            
-
         }
 
 

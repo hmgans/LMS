@@ -90,7 +90,6 @@ namespace LMS.Controllers
                                       }
                         };
 
-            //TODO: figure out how to get an array of JSON objects
             return Json(query.ToArray());
     }
 
@@ -156,7 +155,7 @@ namespace LMS.Controllers
                         where a.Name.Equals(asgname)
                         select a.Contents;
 
-            return Content(query.ToString()); // is this the right way to return the query as a string?
+            return Content(query.ToArray()[0]);
     }
 
 
@@ -188,10 +187,18 @@ namespace LMS.Controllers
                         && d.Subject.Equals(subject)
                         select new
                         {
-                           contents = r == null ? "" : r.Contents
+                            contents = (r == null) ? "" : r.Contents
                         };
 
-            return Content(query.ToString());
+            // dumb workaround to get the first value in query without the compiler getting mad
+            // "cannot convert from '<anonymous type: string contents>' to 'string'" when returning query.ToArray()[0] 
+            string ret = "";
+            foreach (var r in query)
+            {
+                ret = r.contents;
+            }
+            
+            return Content(ret);
     }
 
 
@@ -221,7 +228,7 @@ namespace LMS.Controllers
                              fname = s.FirstName,
                              lname = s.LastName,
                              uid = s.UId,
-                             department = d.DId
+                             department = d.Name
                          };
 
             if (query1.Any()) // if query1 is successful
@@ -237,7 +244,7 @@ namespace LMS.Controllers
                              fname = p.FirstName,
                              lname = p.LastName,
                              uid = p.UId,
-                             department = d.DId
+                             department = d.Name
                          };
 
             if (query2.Any()) // if query2 is successful
