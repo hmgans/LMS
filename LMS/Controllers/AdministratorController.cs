@@ -42,8 +42,6 @@ namespace LMS.Controllers
         /// <returns>The JSON result</returns>
         public IActionResult GetCourses(string subject)
         {
-            // generate a new UID
-
                 var query = from p in db.Courses
                             join g in db.Department on p.DId equals g.DId
                             where g.Subject.Equals(subject)
@@ -53,7 +51,6 @@ namespace LMS.Controllers
                                 name = p.Name
                             };
                 return Json(query.ToArray());
-            
         }
 
 
@@ -83,8 +80,6 @@ namespace LMS.Controllers
 
                             };
                 return Json(query.ToArray());
-            
-
         }
 
 
@@ -104,18 +99,18 @@ namespace LMS.Controllers
                              where p.Subject.Equals(subject)
                              select p.DId).Distinct();
             
-            if (query.Count() == 1)
-            {
-                Courses course = new Courses();
-                course.DId = query.ToArray()[0];
-                course.Number = number;
-                course.Name = name;
+                if (query.Count() == 1)
+                {
+                    Courses course = new Courses();
+                    course.DId = query.ToArray()[0];
+                    course.Number = number;
+                    course.Name = name;
 
-                db.Courses.Add(course);
-                int success = db.SaveChanges();
+                    db.Courses.Add(course);
+                    int success = db.SaveChanges();
+                    return Json(new { success = true });
+                }
                 return Json(new { success = true });
-            }
-            return Json(new { success = true });
         }
 
 
@@ -137,32 +132,27 @@ namespace LMS.Controllers
         /// a Class offering of the same Course in the same Semester.</returns>
         public IActionResult CreateClass(string subject, int number, string season, int year, DateTime start, DateTime end, string location, string instructor)
         {
-            
-
                 var query = from p in db.Department
                              join x in db.Courses on p.DId equals x.DId where p.Subject.Equals(subject) && x.Number.Equals(number)
                             select x.CId;
 
-            if (query.Count() == 1)
-            {
-                Classes newClass = new Classes();
-                newClass.CId = query.ToArray()[0];
-                newClass.SemesterSeason = season;
-                newClass.SemesterYear = (uint)year;
-                newClass.ProfId = instructor;
-                newClass.Location = location;
-                newClass.Start = start;
-                newClass.End = end;
+                if (query.Count() == 1)
+                {
+                    Classes newClass = new Classes();
+                    newClass.CId = query.ToArray()[0];
+                    newClass.SemesterSeason = season;
+                    newClass.SemesterYear = (uint)year;
+                    newClass.ProfId = instructor;
+                    newClass.Location = location;
+                    newClass.Start = start;
+                    newClass.End = end;
 
-                db.Classes.Add(newClass);
-                int success = db.SaveChanges();
+                    db.Classes.Add(newClass);
+                    int success = db.SaveChanges();
 
-                return Json(new { success = true });
-            }
-            return Json(new { success = false });
-
-
-
+                    return Json(new { success = true });
+                }
+                return Json(new { success = false });
         }
 
 

@@ -186,6 +186,7 @@ namespace LMS.Controllers
                         {
                            contents = r.Contents
                         };
+
             if (query.Count() == 1)
             {
                 return Content(query.ToArray()[0].contents);

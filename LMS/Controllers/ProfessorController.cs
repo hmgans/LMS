@@ -123,7 +123,6 @@ namespace LMS.Controllers
                                 grade = x.Grade
                             };
                 return Json(query.ToArray());
-
             }
         }
 
@@ -163,6 +162,7 @@ namespace LMS.Controllers
                                 due = w.DueDate,
                                 submissions = (from q in db.Submissions where q.AssId.Equals(w.AssId) select q).Count()
                             };
+
                 return Json(query.ToArray());
             }
             else
@@ -181,6 +181,7 @@ namespace LMS.Controllers
                                 due = w.DueDate,
                                 submissions = (from q in db.Submissions where q.AssId.Equals(w.AssId) select q).Count()
                             };
+
                 return Json(query.ToArray());
             }
         }
@@ -234,6 +235,7 @@ namespace LMS.Controllers
                         where h.SemesterSeason.Equals(season) && h.SemesterYear == year && g.Number.Equals(num)
                         && p.Subject.Equals(subject) && w.Name.Equals(category)
                         select h.ClassId;
+
             if( query1.Count() == 1)
             {
                 return Json(new { success = false });
@@ -249,7 +251,7 @@ namespace LMS.Controllers
             if (query.Count() == 1)
             {
                 AssignmentCategory assignCat = new AssignmentCategory();
-                assignCat.ClassId = query.ToArray()[0]; // TODO: This is throwing an exception because query is null for some reason
+                assignCat.ClassId = query.ToArray()[0];
                 assignCat.Name = category;
                 assignCat.Weight = (uint?)catweight;
 
@@ -257,6 +259,7 @@ namespace LMS.Controllers
                 int success = db.SaveChanges();
                 return Json(new { success = true });
             }
+
             return Json(new { success = false });
         }
 
@@ -427,6 +430,7 @@ namespace LMS.Controllers
                                 join ac in db.AssignmentCategory on a.AcId equals ac.AcId
                                 where a.AssId.Equals(assID)
                                 select ac.ClassId;
+
             int classID = getClassID.ToArray()[0];
 
             var AllCategories = from ac in db.AssignmentCategory

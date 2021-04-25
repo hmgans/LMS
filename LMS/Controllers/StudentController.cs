@@ -337,11 +337,13 @@ namespace LMS.Controllers
                 }
 
             }
-            double result = GPATotal / TotalClasses;
+
             if(TotalClasses == 0)
             {
                 return Json(new { gpa = 0.0 });
             }
+
+            double result = GPATotal / TotalClasses;
 
             return Json(new { gpa = result });
     }
